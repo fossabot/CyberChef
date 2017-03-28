@@ -1,6 +1,6 @@
 # CyberChef
 
-####*The Cyber Swiss Army Knife*
+#### *The Cyber Swiss Army Knife*
 
 CyberChef is a simple, intuitive web app for carrying out all manner of "cyber" operations within a web browser. These operations include creating hexdumps, simple encoding like XOR or Base64, more complex encryption like AES, DES and Blowfish, data compression and decompression, calculating hashes and checksums, IPv6 and X.509 parsing, and much more.
 
@@ -77,6 +77,11 @@ An installation walkthrough, how-to guides for adding new operations, descriptio
  - Sign the [GCHQ Contributor Licence Agreement](https://github.com/gchq/Gaffer/wiki/GCHQ-OSS-Contributor-License-Agreement-V1.0)
  - Push your changes to your fork.
  - Submit a pull request.
+
+
+## Licencing
+
+CyberChef is released under the [Apache 2.0 Licence](https://www.apache.org/licenses/LICENSE-2.0) and is covered by [Crown Copyright](https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/copyright-and-re-use/crown-copyright/).
 
 
   [1]: https://gchq.github.io/CyberChef

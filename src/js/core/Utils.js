@@ -94,6 +94,42 @@ var Utils = {
 
 
     /**
+     * Adds trailing bytes to a byteArray.
+     *
+     * @author tlwr [toby@toby.codes]
+     *
+     * @param {byteArray} arr - byteArray to add trailing bytes to.
+     * @param {number} numBytes - Maximum width of the array.
+     * @param {Integer} [padByte=0] - The byte to pad with.
+     * @returns {byteArray}
+     *
+     * @example
+     * // returns ["a", 0, 0, 0]
+     * Utils.padBytesRight("a", 4);
+     *
+     * // returns ["a", 1, 1, 1]
+     * Utils.padBytesRight("a", 4, 1);
+     *
+     * // returns ["t", "e", "s", "t", 0, 0, 0, 0]
+     * Utils.padBytesRight("test", 8);
+     *
+     * // returns ["t", "e", "s", "t", 1, 1, 1, 1]
+     * Utils.padBytesRight("test", 8, 1);
+     */
+    padBytesRight: function(arr, numBytes, padByte) {
+        padByte = padByte || 0;
+        var paddedBytes = new Array(numBytes);
+        paddedBytes.fill(padByte);
+
+        Array.prototype.map.call(arr, function(b, i) {
+            paddedBytes[i] = b;
+        });
+
+        return paddedBytes;
+    },
+
+
+    /**
      * @alias Utils.padLeft
      */
     pad: function(str, max, chr) {
@@ -865,20 +901,57 @@ var Utils = {
 
 
     /**
-     * Escapes HTML tags in a string to stop them being rendered
+     * Escapes HTML tags in a string to stop them being rendered.
+     * https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet
      *
      * @param {string} str
      * @returns string
      *
      * @example
-     * // return "A &lt;script> tag"
+     * // return "A &lt;script&gt; tag"
      * Utils.escapeHtml("A <script> tag");
      */
     escapeHtml: function(str) {
-        return str.replace(/</g, "&lt;")
-                  .replace(/'/g, "&apos;")
-                  .replace(/"/g, "&quot;")
-                  .replace(/&/g, "&amp;");
+        var HTML_CHARS = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#x27;", // &apos; not recommended because it's not in the HTML spec
+            "/": "&#x2F;", // forward slash is included as it helps end an HTML entity
+            "`": "&#x60;"
+        };
+
+        return str.replace(/[&<>"'\/`]/g, function (match) {
+            return HTML_CHARS[match];
+        });
+    },
+
+
+    /**
+     * Unescapes HTML tags in a string to make them render again.
+     *
+     * @param {string} str
+     * @returns string
+     *
+     * @example
+     * // return "A <script> tag"
+     * Utils.unescapeHtml("A &lt;script&gt; tag");
+     */
+    unescapeHtml: function(str) {
+        var HTML_CHARS = {
+            "&amp;":  "&",
+            "&lt;":   "<",
+            "&gt;":   ">",
+            "&quot;": '"',
+            "&#x27;": "'",
+            "&#x2F;": "/",
+            "&#x60;": "`"
+        };
+
+        return str.replace(/&#?x?[a-z0-9]{2,4};/ig, function (match) {
+            return HTML_CHARS[match] || match;
+        });
     },
 
 
@@ -922,19 +995,102 @@ var Utils = {
      * @returns {Object}
      */
     extend: function(a, b){
-        for(var key in b)
-            if(b.hasOwnProperty(key))
+        for (var key in b)
+            if (b.hasOwnProperty(key))
                 a[key] = b[key];
         return a;
     },
 
 
     /**
-     * Actual modulo function, since % is actually the remainder function in JS
+     * Formats a list of files or directories.
+     * A File is an object with a "fileName" and optionally a "contents".
+     * If the fileName ends with "/" and the contents is of length 0 then
+     * it is considered a directory.
+     *
+     * @author tlwr [toby@toby.codes]
+     *
+     * @param {Object[]} files
+     * @returns {html}
+     */
+    displayFilesAsHTML: function(files){
+        var formatDirectory = function(file) {
+            var html = "<div class='panel panel-default'>" +
+                   "<div class='panel-heading' role='tab'>" +
+                   "<h4 class='panel-title'>" +
+                   file.fileName +
+                   // The following line is for formatting when HTML is stripped
+                   "<span style='display: none'>\n0 bytes\n</span>" +
+                   "</h4>" +
+                   "</div>" +
+                   "</div>";
+            return html;
+        };
+
+        var formatFile = function(file, i) {
+            var blob = new Blob(
+                [new Uint8Array(file.bytes)],
+                {type: "octet/stream"}
+            );
+            var blobUrl = URL.createObjectURL(blob);
+
+            var downloadAnchorElem = "<a href='" + blobUrl + "' " +
+                "title='Download " + Utils.escapeHtml(file.fileName) + "' " +
+                "download='" + Utils.escapeHtml(file.fileName) + "'>\u21B4</a>";
+
+            var expandFileContentsElem = "<a href='#collapse" + i + "' " +
+                "class='collapsed' " +
+                "data-toggle='collapse' " +
+                "aria-expanded='true' " +
+                "aria-controls='collapse" + i + "' " +
+                "title=\"Show/hide contents of '" + Utils.escapeHtml(file.fileName) + "'\">&#x1F50D</a>";
+
+            var html = "<div class='panel panel-default'>" +
+                       "<div class='panel-heading' role='tab' id='heading" + i + "'>" +
+                       "<h4 class='panel-title'>" +
+                       "<div>" +
+                       Utils.escapeHtml(file.fileName) +
+                       " " +  expandFileContentsElem +
+                       " " + downloadAnchorElem +
+                       "<span class='pull-right'>" +
+                       // These are for formatting when stripping HTML
+                       "<span style='display: none'>\n</span>" +
+                       file.size.toLocaleString() + " bytes" +
+                       "<span style='display: none'>\n</span>" +
+                       "</span>" +
+                       "</div>" +
+                       "</h4>" +
+                       "</div>" +
+                       "<div id='collapse" + i + "' class='panel-collapse collapse' " +
+                       "role='tabpanel' aria-labelledby='heading" + i + "'>" +
+                       "<div class='panel-body'>" +
+                       "<pre><code>" + Utils.escapeHtml(file.contents) + "</pre></code></div>" +
+                       "</div>" +
+                       "</div>";
+            return html;
+        };
+
+        var html = "<div style='padding: 5px;'>" +
+                   files.length +
+                   " file(s) found</div>\n";
+        files.forEach(function(file, i) {
+            if (typeof file.contents !== "undefined") {
+                html += formatFile(file, i);
+            } else {
+                html += formatDirectory(file);
+            }
+        });
+        return html;
+    },
+
+
+    /**
+     * Actual modulo function, since % is actually the remainder function in JS.
      *
      * @author Matt C [matt@artemisbot.pw]
      * @param {number} x
      * @param {number} y
+     * @returns {number}
      */
     mod: function (x, y) {
         return ((x % y) + y) % y;
@@ -942,11 +1098,12 @@ var Utils = {
 
 
     /**
-     * Finds GCD of two numbers
+     * Finds the greatest common divisor of two numbers.
      *
      * @author Matt C [matt@artemisbot.pw]
      * @param {number} x
      * @param {number} y
+     * @returns {number}
      */
     gcd: function(x, y) {
         if (!y) {
@@ -957,11 +1114,12 @@ var Utils = {
 
 
     /**
-     * Finds modular inverse of two values
+     * Finds the modular inverse of two values.
      *
      * @author Matt C [matt@artemisbot.pw]
      * @param {number} x
      * @param {number} y
+     * @returns {number}
      */
     modInv: function(x, y) {
         x %= y;
@@ -1164,7 +1322,6 @@ Array.prototype.equals = function(other) {
 String.prototype.count = function(chr) {
     return this.split(chr).length - 1;
 };
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

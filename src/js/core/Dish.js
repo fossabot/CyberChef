@@ -100,7 +100,7 @@ Dish.enumLookup = function(typeEnum) {
 Dish.prototype.set = function(value, type) {
     this.value = value;
     this.type  = type;
-    
+
     if (!this.valid()) {
         var sample = Utils.truncate(JSON.stringify(this.value), 13);
         throw "Data is not a valid " + Dish.enumLookup(type) + ": " + sample;
@@ -139,13 +139,13 @@ Dish.prototype.translate = function(toType) {
             this.type = Dish.BYTE_ARRAY;
             break;
         case Dish.HTML:
-            this.value = this.value ? Utils.strToByteArray(Utils.stripHtmlTags(this.value, true)) : [];
+            this.value = this.value ? Utils.strToByteArray(Utils.unescapeHtml(Utils.stripHtmlTags(this.value, true))) : [];
             this.type = Dish.BYTE_ARRAY;
             break;
         default:
             break;
     }
-    
+
     // Convert from byteArray to toType
     switch (toType) {
         case Dish.STRING:
@@ -175,7 +175,7 @@ Dish.prototype.valid = function() {
             if (!(this.value instanceof Array)) {
                 return false;
             }
-            
+
             // Check that every value is a number between 0 - 255
             for (var i = 0; i < this.value.length; i++) {
                 if (typeof this.value[i] != "number" ||

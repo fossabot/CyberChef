@@ -164,6 +164,37 @@ var OperationConfig = {
             },
         ]
     },
+    "From Base58": {
+        description: "Base58 (similar to Base64) is a notation for encoding arbitrary byte data. It differs from Base64 by removing easily misread characters (i.e. l, I, 0 and O) to improve human readability.<br><br>This operation decodes data from an ASCII string (with an alphabet of your choosing, presets included) back into its raw form.<br><br>e.g. <code>StV1DL6CwTryKyV</code> becomes <code>hello world</code><br><br>Base58 is commonly used in cryptocurrencies (Bitcoin, Ripple, etc).",
+        run: Base58.runFrom,
+        inputType: "string",
+        outputType: "byteArray",
+        args: [
+            {
+                name: "Alphabet",
+                type: "editableOption",
+                value: Base58.ALPHABET_OPTIONS
+            },
+            {
+                name: "Remove non&#8209;alphabet chars",
+                type: "boolean",
+                value: Base58.REMOVE_NON_ALPH_CHARS
+            }
+        ]
+    },
+    "To Base58": {
+        description: "Base58 (similar to Base64) is a notation for encoding arbitrary byte data. It differs from Base64 by removing easily misread characters (i.e. l, I, 0 and O) to improve human readability.<br><br>This operation encodes data in an ASCII string (with an alphabet of your choosing, presets included).<br><br>e.g. <code>hello world</code> becomes <code>StV1DL6CwTryKyV</code><br><br>Base58 is commonly used in cryptocurrencies (Bitcoin, Ripple, etc).",
+        run: Base58.runTo,
+        inputType: "byteArray",
+        outputType: "string",
+        args: [
+            {
+                name: "Alphabet",
+                type: "editableOption",
+                value: Base58.ALPHABET_OPTIONS
+            },
+        ]
+    },
     "From Base32": {
         description: "Base32 is a notation for encoding arbitrary byte data using a restricted set of symbols that can be conveniently used by humans and processed by computers. It uses a smaller set of characters than Base64, usually the uppercase alphabet and the numbers 2 to 7.",
         run: Base64.runFrom32,
@@ -760,10 +791,23 @@ var OperationConfig = {
     },
     "Parse IPv6 address": {
         description: "Displays the longhand and shorthand versions of a valid IPv6 address.<br><br>Recognises all reserved ranges and parses encapsulated or tunnelled addresses including Teredo and 6to4.",
-        run: IP.runParseIpv6,
+        run: IP.runParseIPv6,
         inputType: "string",
         outputType: "string",
         args: []
+    },
+    "Parse IPv4 header": {
+        description: "Given an IPv4 header, this operations parses and displays each field in an easily readable format.",
+        run: IP.runParseIPv4Header,
+        inputType: "string",
+        outputType: "html",
+        args: [
+            {
+                name: "Input format",
+                type: "option",
+                value: IP.IP_HEADER_FORMAT
+            }
+        ]
     },
     "Text encoding": {
         description: "Translates the data between different character encodings.<br><br>Supported charsets are:<ul><li>UTF8</li><li>UTF16</li><li>UTF16LE (little-endian)</li><li>UTF16BE (big-endian)</li><li>Hex</li><li>Base64</li><li>Latin1 (ISO-8859-1)</li><li>Windows-1251</li></ul>",
@@ -1361,7 +1405,7 @@ var OperationConfig = {
         ]
     },
     "Affine Cipher Encode": {
-        description: "The Affine cipher is a type of monoalphabetic substitution cipher, wherein each letter in an alphabet is mapped to its numeric equivalent, encrypted using simple mathematical function (ax + b) % 26, and converted back to a letter.",
+        description: "The Affine cipher is a type of monoalphabetic substitution cipher, wherein each letter in an alphabet is mapped to its numeric equivalent, encrypted using simple mathematical function, <code>(ax + b) % 26</code>, and converted back to a letter.",
         run: Cipher.runAffineEnc,
         highlight: true,
         highlightReverse: true,
@@ -1533,6 +1577,32 @@ var OperationConfig = {
                 name: "Cisco style",
                 type: "boolean",
                 value: MAC.CISCO_STYLE
+            }
+        ]
+    },
+    "Encode NetBIOS Name": {
+        description: "NetBIOS names as seen across the client interface to NetBIOS are exactly 16 bytes long. Within the NetBIOS-over-TCP protocols, a longer representation is used.<br><br>There are two levels of encoding. The first level maps a NetBIOS name into a domain system name.  The second level maps the domain system name into the 'compressed' representation required for interaction with the domain name system.<br><br>This operation carries out the first level of encoding. See RFC 1001 for full details.",
+        run: NetBIOS.runEncodeName,
+        inputType: "byteArray",
+        outputType: "byteArray",
+        args: [
+            {
+                name: "Offset",
+                type: "number",
+                value: NetBIOS.OFFSET
+            }
+        ]
+    },
+    "Decode NetBIOS Name": {
+        description: "NetBIOS names as seen across the client interface to NetBIOS are exactly 16 bytes long. Within the NetBIOS-over-TCP protocols, a longer representation is used.<br><br>There are two levels of encoding. The first level maps a NetBIOS name into a domain system name.  The second level maps the domain system name into the 'compressed' representation required for interaction with the domain name system.<br><br>This operation decodes the first level of encoding. See RFC 1001 for full details.",
+        run: NetBIOS.runDecodeName,
+        inputType: "byteArray",
+        outputType: "byteArray",
+        args: [
+            {
+                name: "Offset",
+                type: "number",
+                value: NetBIOS.OFFSET
             }
         ]
     },
@@ -1977,7 +2047,7 @@ var OperationConfig = {
         ]
     },
     "Regular expression": {
-        description: "Define your own regular expression to search the input data with, optionally choosing from a list of pre-defined patterns.",
+        description: "Define your own regular expression (regex) to search the input data with, optionally choosing from a list of pre-defined patterns.",
         run: StrUtils.runRegex,
         manualBake: true,
         inputType: "string",
@@ -3041,6 +3111,27 @@ var OperationConfig = {
                 type: "option",
                 value: MorseCode.WORD_DELIM_OPTIONS
             }
+        ]
+    },
+    "Tar": {
+        description: "Packs the input into a tarball.<br><br>No support for multiple files at this time.",
+        run: Compress.runTar,
+        inputType: "byteArray",
+        outputType: "byteArray",
+        args: [
+            {
+                name: "Filename",
+                type: "string",
+                value: Compress.TAR_FILENAME
+            }
+        ]
+    },
+    "Untar": {
+        description: "Unpacks a tarball and displays it per file.",
+        run: Compress.runUntar,
+        inputType: "byteArray",
+        outputType: "html",
+        args: [
         ]
     }
 };

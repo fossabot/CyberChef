@@ -40,6 +40,8 @@ var Categories = [
             "Show Base64 offsets",
             "To Base32",
             "From Base32",
+            "To Base58",
+            "From Base58",
             "To Base",
             "From Base",
             "To HTML Entity",
@@ -125,12 +127,15 @@ var Categories = [
             "Parse User Agent",
             "Parse IP range",
             "Parse IPv6 address",
+            "Parse IPv4 header",
             "Parse URI",
             "URL Encode",
             "URL Decode",
             "Format MAC addresses",
             "Change IP format",
             "Group IP addresses",
+            "Encode NetBIOS Name",
+            "Decode NetBIOS Name",
         ]
     },
     {
@@ -212,6 +217,8 @@ var Categories = [
             "Zip",
             "Unzip",
             "Bzip2 Decompress",
+            "Tar",
+            "Untar",
         ]
     },
     {
