@@ -489,6 +489,14 @@ const Cipher = {
      * @default
      */
     AFFINE_B: 0,
+    /**
+     * @constant
+     * @default
+     */
+    AFFINE_ALPHABET_OPTIONS: [
+        {name: "Latin: abcdefghijklmnopqrstuvwxyz", value: "abcdefghijklmnopqrstuvwxyz"},
+        {name: "Hebrew: אבגדהוזחטיכלמנסעפצקרשת", value: "אבגדהוזחטיכלמנסעפצקרשת"}
+    ],
 
     /**
      * Affine Cipher Encode operation.
@@ -499,9 +507,9 @@ const Cipher = {
      * @returns {string}
      */
     runAffineEnc: function (input, args) {
-        var alphabet = "abcdefghijklmnopqrstuvwxyz",
-            a = args[0],
+        var a = args[0],
             b = args[1],
+            alphabet = args[2],
             output = "";
 
         if (!/^\+?(0|[1-9]\d*)$/.test(a) || !/^\+?(0|[1-9]\d*)$/.test(b)) {
@@ -511,10 +519,10 @@ const Cipher = {
         for (var i = 0; i < input.length; i++) {
             if (alphabet.indexOf(input[i]) >= 0) {
                 // Uses the affine function ax+b % m = y (where m is length of the alphabet)
-                output += alphabet[((a * alphabet.indexOf(input[i])) + b) % 26];
+                output += alphabet[((a * alphabet.indexOf(input[i])) + b) % alphabet.length];
             } else if (alphabet.indexOf(input[i].toLowerCase()) >= 0) {
                 // Same as above, accounting for uppercase
-                output += alphabet[((a * alphabet.indexOf(input[i].toLowerCase())) + b) % 26].toUpperCase();
+                output += alphabet[((a * alphabet.indexOf(input[i].toLowerCase())) + b) % alphabet.length].toUpperCase();
             } else {
                 // Non-alphabetic characters
                 output += input[i];
@@ -533,9 +541,9 @@ const Cipher = {
      * @returns {string}
      */
     runAffineDec: function (input, args) {
-        var alphabet = "abcdefghijklmnopqrstuvwxyz",
-            a = args[0],
+        var a = args[0],
             b = args[1],
+            alphabet = args[2],
             output = "",
             aModInv;
 
@@ -543,20 +551,19 @@ const Cipher = {
             return "The values of a and b can only be integers.";
         }
 
-        if (Utils.gcd(a, 26) !== 1) {
-            return "The value of a must be coprime to 26.";
+        if (Utils.gcd(a, alphabet.length) !== 1) {
+            return `The value of a must be coprime to ${alphabet.length}.`;
         }
 
         // Calculates modular inverse of a
-        aModInv = Utils.modInv(a, 26);
-
+        aModInv = Utils.modInv(a, alphabet.length);
         for (var i = 0; i < input.length; i++) {
             if (alphabet.indexOf(input[i]) >= 0) {
                 // Uses the affine decode function (y-b * A') % m = x (where m is length of the alphabet and A' is modular inverse)
-                output += alphabet[Utils.mod((alphabet.indexOf(input[i]) - b) * aModInv, 26)];
+                output += alphabet[Utils.mod((alphabet.indexOf(input[i]) - b) * aModInv, alphabet.length)];
             } else if (alphabet.indexOf(input[i].toLowerCase()) >= 0) {
                 // Same as above, accounting for uppercase
-                output += alphabet[Utils.mod((alphabet.indexOf(input[i].toLowerCase()) - b) * aModInv, 26)].toUpperCase();
+                output += alphabet[Utils.mod((alphabet.indexOf(input[i].toLowerCase()) - b) * aModInv, alphabet.length)].toUpperCase();
             } else {
                 // Non-alphabetic characters
                 output += input[i];
@@ -575,7 +582,8 @@ const Cipher = {
      * @returns {string}
      */
     runAtbash: function (input, args) {
-        return Cipher.runAffineEnc(input, [25, 25]);
+        var alphabet = args[0];
+        return Cipher.runAffineEnc(input, [alphabet.length-1, alphabet.length-1, alphabet]);
     },
 
 

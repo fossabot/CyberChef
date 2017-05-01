@@ -1454,6 +1454,11 @@ const OperationConfig = {
                 name: "b",
                 type: "number",
                 value: Cipher.AFFINE_B
+            },
+            {
+                name: "Alphabet",
+                type: "editableOption",
+                value: Cipher.AFFINE_ALPHABET_OPTIONS
             }
         ]
     },
@@ -1474,6 +1479,11 @@ const OperationConfig = {
                 name: "b",
                 type: "number",
                 value: Cipher.AFFINE_B
+            },
+            {
+                name: "Alphabet",
+                type: "editableOption",
+                value: Cipher.AFFINE_ALPHABET_OPTIONS
             }
         ]
     },
@@ -1484,7 +1494,13 @@ const OperationConfig = {
         highlightReverse: true,
         inputType: "string",
         outputType: "string",
-        args: []
+        args: [
+            {
+                name: "Alphabet",
+                type: "editableOption",
+                value: Cipher.AFFINE_ALPHABET_OPTIONS
+            }
+        ]
     },
     "Rotate right": {
         description: "Rotates each byte to the right by the number of bits specified. Currently only supports 8-bit values.",
