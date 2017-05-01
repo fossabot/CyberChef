@@ -425,7 +425,7 @@ const OperationConfig = {
         ]
     },
     "From Hex": {
-        description: "Converts a hexadecimal byte string back into a its raw value.<br><br>e.g. <code>ce 93 ce b5 ce b9 ce ac 20 cf 83 ce bf cf 85 0a</code> becomes the UTF-8 encoded string <code>Γειά σου</code>",
+        description: "Converts a hexadecimal byte string back into its raw value.<br><br>e.g. <code>ce 93 ce b5 ce b9 ce ac 20 cf 83 ce bf cf 85 0a</code> becomes the UTF-8 encoded string <code>Γειά σου</code>",
         run: ByteRepr.runFromHex,
         highlight: ByteRepr.highlightFrom,
         highlightReverse: ByteRepr.highlightTo,
@@ -451,6 +451,36 @@ const OperationConfig = {
                 name: "Delimiter",
                 type: "option",
                 value: ByteRepr.HEX_DELIM_OPTIONS
+            }
+        ]
+    },
+    "From Octal": {
+        description: "Converts an octal byte string back into its raw value.<br><br>e.g. <code>316 223 316 265 316 271 316 254 40 317 203 316 277 317 205</code> becomes the UTF-8 encoded string <code>Γειά σου</code>",
+        run: ByteRepr.runFromOct,
+        highlight: false,
+        highlightReverse: false,
+        inputType: "string",
+        outputType: "byteArray",
+        args: [
+            {
+                name: "Delimiter",
+                type: "option",
+                value: ByteRepr.DELIM_OPTIONS
+            }
+        ]
+    },
+    "To Octal": {
+        description: "Converts the input string to octal bytes separated by the specified delimiter.<br><br>e.g. The UTF-8 encoded string <code>Γειά σου</code> becomes <code>316 223 316 265 316 271 316 254 40 317 203 316 277 317 205</code>",
+        run: ByteRepr.runToOct,
+        highlight: false,
+        highlightReverse: false,
+        inputType: "byteArray",
+        outputType: "string",
+        args: [
+            {
+                name: "Delimiter",
+                type: "option",
+                value: ByteRepr.DELIM_OPTIONS
             }
         ]
     },
@@ -3182,7 +3212,59 @@ const OperationConfig = {
         outputType: "html",
         args: [
         ]
-    }
+    },
+    "Head": {
+        description: [
+            "Like the UNIX head utility.",
+            "<br>",
+            "Gets the first n lines.",
+            "<br>",
+            "You can select all but the last n lines by entering a negative value for n.",
+            "<br>",
+            "The delimiter can be changed so that instead of lines, fields (i.e. commas) are selected instead.",
+        ].join("\n"),
+        run: StrUtils.runHead,
+        inputType: "string",
+        outputType: "string",
+        args: [
+            {
+                name: "Delimiter",
+                type: "option",
+                value: StrUtils.DELIMITER_OPTIONS
+            },
+            {
+                name: "Number",
+                type: "number",
+                value: 10,
+            },
+        ]
+    },
+    "Tail": {
+        description: [
+            "Like the UNIX tail utility.",
+            "<br>",
+            "Gets the last n lines.",
+            "<br>",
+            "Optionally you can select all lines after line n by entering a negative value for n.",
+            "<br>",
+            "The delimiter can be changed so that instead of lines, fields (i.e. commas) are selected instead.",
+        ].join("\n"),
+        run: StrUtils.runTail,
+        inputType: "string",
+        outputType: "string",
+        args: [
+            {
+                name: "Delimiter",
+                type: "option",
+                value: StrUtils.DELIMITER_OPTIONS
+            },
+            {
+                name: "Number",
+                type: "number",
+                value: 10,
+            },
+        ]
+    },
 };
 
 export default OperationConfig;

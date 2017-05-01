@@ -1,7 +1,7 @@
 {
   "name": "cyberchef",
-  "version": "5.0.1",
-  "description": "CyberChef is a simple, intuitive web app for analysing and decoding data within a web browser.",
+  "version": "5.2.4",
+  "description": "The Cyber Swiss Army Knife for encryption, encoding, compression and data analysis.",
   "author": "n1474335 <n1474335@gmail.com>",
   "homepage": "https://gchq.github.io/CyberChef",
   "copyright": "Crown copyright 2016",
@@ -19,12 +19,16 @@
     "hex",
     "encoding",
     "format",
-    "cybersecurity"
+    "cybersecurity",
+    "data manipulation",
+    "data analysis"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/gchq/CyberChef/"
   },
+  "main": "build/node/CyberChef.js",
+  "bugs": "https://github.com/gchq/CyberChef/issues",
   "devDependencies": {
     "babel-core": "^6.24.0",
     "babel-loader": "^6.4.0",
@@ -35,6 +39,7 @@
     "extract-text-webpack-plugin": "^2.1.0",
     "file-loader": "^0.10.1",
     "grunt": ">=0.4.5",
+    "grunt-accessibility": "~5.0.0",
     "grunt-chmod": "~1.1.1",
     "grunt-contrib-clean": "~1.0.0",
     "grunt-contrib-copy": "~1.0.0",

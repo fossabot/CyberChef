@@ -50,6 +50,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks("grunt-chmod");
     grunt.loadNpmTasks("grunt-exec");
     grunt.loadNpmTasks("grunt-execute");
+    grunt.loadNpmTasks("grunt-accessibility");
 
 
     // Project configuration
@@ -131,6 +132,18 @@ module.exports = function (grunt) {
                     "src/**/*.js",
                     "!src/core/lib/**/*",
                 ],
+            }
+        },
+        accessibility: {
+            options: {
+                accessibilityLevel: "WCAG2A",
+                verbose: false,
+                ignore: [
+                    "WCAG2A.Principle1.Guideline1_3.1_3_1.H42.2"
+                ]
+            },
+            test: {
+                src: ["build/**/*.html"]
             }
         },
         webpack: {

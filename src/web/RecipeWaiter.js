@@ -26,7 +26,6 @@ var RecipeWaiter = function(app, manager) {
 RecipeWaiter.prototype.initialiseOperationDragNDrop = function() {
     var recList = document.getElementById("rec-list");
 
-
     // Recipe list
     Sortable.create(recList, {
         group: "recipe",
@@ -42,6 +41,11 @@ RecipeWaiter.prototype.initialiseOperationDragNDrop = function() {
             if (this.removeIntent) {
                 evt.item.remove();
                 evt.target.dispatchEvent(this.manager.operationremove);
+            }
+        }.bind(this),
+        onSort: function(evt) {
+            if (evt.from.id === "rec-list") {
+                document.dispatchEvent(this.manager.statechange);
             }
         }.bind(this)
     });
@@ -72,21 +76,25 @@ RecipeWaiter.prototype.initialiseOperationDragNDrop = function() {
 /**
  * Creates a drag-n-droppable seed list of operations.
  *
- * @param {element} listEl - The list the initialise
+ * @param {element} listEl - The list to initialise
  */
 RecipeWaiter.prototype.createSortableSeedList = function(listEl) {
     Sortable.create(listEl, {
         group: {
             name: "recipe",
             pull: "clone",
-            put: false
+            put: false,
         },
         sort: false,
         setData: function(dataTransfer, dragEl) {
             dataTransfer.setData("Text", dragEl.textContent);
         },
         onStart: function(evt) {
+            // Removes popover element and event bindings from the dragged operation but not the
+            // event bindings from the one left in the operations list. Without manually removing
+            // these bindings, we cannot re-initialise the popover on the stub operation.
             $(evt.item).popover("destroy");
+            $(evt.clone).off(".popover").removeData("bs.popover");
             evt.item.setAttribute("data-toggle", "popover-disabled");
         },
         onEnd: this.opSortEnd.bind(this)
