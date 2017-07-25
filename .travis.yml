@@ -9,7 +9,7 @@ script:
   - grunt test
   - grunt docs
   - grunt node
-  - grunt prod
+  - grunt prod --msg="$COMPILE_MSG"
 before_deploy:
   - grunt copy:ghPages
 deploy:
@@ -19,6 +19,7 @@ deploy:
     local_dir: build/prod/
     target_branch: gh-pages
     on:
+      repo: gchq/CyberChef
       branch: master
   - provider: releases
     skip_cleaup: true

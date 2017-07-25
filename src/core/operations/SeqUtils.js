@@ -26,7 +26,7 @@ const SeqUtils = {
      * @constant
      * @default
      */
-    SORT_ORDER: ["Alphabetical (case sensitive)", "Alphabetical (case insensitive)", "IP address"],
+    SORT_ORDER: ["Alphabetical (case sensitive)", "Alphabetical (case insensitive)", "IP address", "Numeric"],
 
     /**
      * Sort operation.
@@ -36,7 +36,7 @@ const SeqUtils = {
      * @returns {string}
      */
     runSort: function (input, args) {
-        var delim = Utils.charRep[args[0]],
+        let delim = Utils.charRep[args[0]],
             sortReverse = args[1],
             order = args[2],
             sorted = input.split(delim);
@@ -47,6 +47,8 @@ const SeqUtils = {
             sorted = sorted.sort(SeqUtils._caseInsensitiveSort);
         } else if (order === "IP address") {
             sorted = sorted.sort(SeqUtils._ipSort);
+        } else if (order === "Numeric") {
+            sorted = sorted.sort(SeqUtils._numericSort);
         }
 
         if (sortReverse) sorted.reverse();
@@ -62,7 +64,7 @@ const SeqUtils = {
      * @returns {string}
      */
     runUnique: function (input, args) {
-        var delim = Utils.charRep[args[0]];
+        const delim = Utils.charRep[args[0]];
         return input.split(delim).unique().join(delim);
     },
 
@@ -81,12 +83,12 @@ const SeqUtils = {
      * @returns {number}
      */
     runCount: function(input, args) {
-        var search = args[0].string,
+        let search = args[0].string,
             type = args[0].option;
 
         if (type === "Regex" && search) {
             try {
-                var regex = new RegExp(search, "gi"),
+                let regex = new RegExp(search, "gi"),
                     matches = input.match(regex);
                 return matches.length;
             } catch (err) {
@@ -117,11 +119,12 @@ const SeqUtils = {
      * @returns {byteArray}
      */
     runReverse: function (input, args) {
+        let i;
         if (args[0] === "Line") {
-            var lines = [],
+            let lines = [],
                 line = [],
                 result = [];
-            for (var i = 0; i < input.length; i++) {
+            for (i = 0; i < input.length; i++) {
                 if (input[i] === 0x0a) {
                     lines.push(line);
                     line = [];
@@ -150,11 +153,11 @@ const SeqUtils = {
      * @returns {string}
      */
     runAddLineNumbers: function(input, args) {
-        var lines = input.split("\n"),
+        let lines = input.split("\n"),
             output = "",
             width = lines.length.toString().length;
 
-        for (var n = 0; n < lines.length; n++) {
+        for (let n = 0; n < lines.length; n++) {
             output += Utils.pad((n+1).toString(), width, " ") + " " + lines[n] + "\n";
         }
         return output.slice(0, output.length-1);
@@ -207,7 +210,7 @@ const SeqUtils = {
      * @returns {number}
      */
     _ipSort: function(a, b) {
-        var a_ = a.split("."),
+        let a_ = a.split("."),
             b_ = b.split(".");
 
         a_ = a_[0] * 0x1000000 + a_[1] * 0x10000 + a_[2] * 0x100 + a_[3] * 1;
@@ -218,6 +221,35 @@ const SeqUtils = {
         if (isNaN(a_) && isNaN(b_)) return a.localeCompare(b);
 
         return a_ - b_;
+    },
+
+
+    /**
+     * Comparison operation for sorting of numeric values.
+     *
+     * @author Chris van Marle
+     * @private
+     * @param {string} a
+     * @param {string} b
+     * @returns {number}
+     */
+    _numericSort: function _numericSort(a, b) {
+        let a_ = a.split(/([^\d]+)/),
+            b_ = b.split(/([^\d]+)/);
+
+        for (let i = 0; i < a_.length && i < b.length; ++i) {
+            if (isNaN(a_[i]) && !isNaN(b_[i])) return 1; // Numbers after non-numbers
+            if (!isNaN(a_[i]) && isNaN(b_[i])) return -1;
+            if (isNaN(a_[i]) && isNaN(b_[i])) {
+                let ret = a_[i].localeCompare(b_[i]); // Compare strings
+                if (ret !== 0) return ret;
+            }
+            if (!isNaN(a_[i]) && !isNaN(a_[i])) { // Compare numbers
+                if (a_[i] - b_[i] !== 0) return a_[i] - b_[i];
+            }
+        }
+
+        return 0;
     },
 
 };

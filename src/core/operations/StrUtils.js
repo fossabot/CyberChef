@@ -100,7 +100,7 @@ const StrUtils = {
      * @returns {html}
      */
     runRegex: function(input, args) {
-        var userRegex = args[1],
+        let userRegex = args[1],
             i = args[2],
             m = args[3],
             displayTotal = args[4],
@@ -112,7 +112,7 @@ const StrUtils = {
 
         if (userRegex && userRegex !== "^" && userRegex !== "$") {
             try {
-                var regex = new RegExp(userRegex, modifiers);
+                const regex = new RegExp(userRegex, modifiers);
 
                 switch (outputFormat) {
                     case "Highlight matches":
@@ -149,7 +149,7 @@ const StrUtils = {
      * @returns {string}
      */
     runUpper: function (input, args) {
-        var scope = args[0];
+        const scope = args[0];
 
         switch (scope) {
             case "Word":
@@ -193,17 +193,17 @@ const StrUtils = {
      * @constant
      * @default
      */
-    FIND_REPLACE_GLOBAL : true,
+    FIND_REPLACE_GLOBAL: true,
     /**
      * @constant
      * @default
      */
-    FIND_REPLACE_CASE : false,
+    FIND_REPLACE_CASE: false,
     /**
      * @constant
      * @default
      */
-    FIND_REPLACE_MULTILINE : true,
+    FIND_REPLACE_MULTILINE: true,
 
     /**
      * Find / Replace operation.
@@ -213,7 +213,7 @@ const StrUtils = {
      * @returns {string}
      */
     runFindReplace: function(input, args) {
-        var find = args[0].string,
+        let find = args[0].string,
             type = args[0].option,
             replace = args[1],
             g = args[2],
@@ -227,14 +227,16 @@ const StrUtils = {
 
         if (type === "Regex") {
             find = new RegExp(find, modifiers);
-        } else if (type.indexOf("Extended") === 0) {
+            return input.replace(find, replace);
+        }
+
+        if (type.indexOf("Extended") === 0) {
             find = Utils.parseEscapedChars(find);
         }
 
-        return input.replace(find, replace, modifiers);
-        // Non-standard addition of flags in the third argument. This will work in Firefox but
-        // probably nowhere else. The purpose is to allow global matching when the `find` parameter
-        // is just a string.
+        find = new RegExp(Utils.escapeRegex(find), modifiers);
+
+        return input.replace(find, replace);
     },
 
 
@@ -257,7 +259,7 @@ const StrUtils = {
      * @returns {string}
      */
     runSplit: function(input, args) {
-        var splitDelim = args[0] || StrUtils.SPLIT_DELIM,
+        let splitDelim = args[0] || StrUtils.SPLIT_DELIM,
             joinDelim = Utils.charRep[args[1]],
             sections = input.split(splitDelim);
 
@@ -274,16 +276,17 @@ const StrUtils = {
      * @returns {string}
      */
     runFilter: function(input, args) {
-        var delim = Utils.charRep[args[0]],
+        let delim = Utils.charRep[args[0]],
+            regex,
             reverse = args[2];
 
         try {
-            var regex = new RegExp(args[1]);
+            regex = new RegExp(args[1]);
         } catch (err) {
             return "Invalid regex. Details: " + err.message;
         }
 
-        var regexFilter = function(value) {
+        const regexFilter = function(value) {
             return reverse ^ regex.test(value);
         };
 
@@ -310,7 +313,7 @@ const StrUtils = {
      * @returns {html}
      */
     runDiff: function(input, args) {
-        var sampleDelim = args[0],
+        let sampleDelim = args[0],
             diffBy = args[1],
             showAdded = args[2],
             showRemoved = args[3],
@@ -354,11 +357,11 @@ const StrUtils = {
                 return "Invalid 'Diff by' option.";
         }
 
-        for (var i = 0; i < diff.length; i++) {
+        for (let i = 0; i < diff.length; i++) {
             if (diff[i].added) {
-                if (showAdded) output += "<span class='hlgreen'>" + Utils.escapeHtml(diff[i].value) + "</span>";
+                if (showAdded) output += "<span class='hl5'>" + Utils.escapeHtml(diff[i].value) + "</span>";
             } else if (diff[i].removed) {
-                if (showRemoved) output += "<span class='hlred'>" + Utils.escapeHtml(diff[i].value) + "</span>";
+                if (showRemoved) output += "<span class='hl3'>" + Utils.escapeHtml(diff[i].value) + "</span>";
             } else {
                 output += Utils.escapeHtml(diff[i].value);
             }
@@ -382,9 +385,9 @@ const StrUtils = {
      * @returns {html}
      */
     runOffsetChecker: function(input, args) {
-        var sampleDelim = args[0],
+        let sampleDelim = args[0],
             samples = input.split(sampleDelim),
-            outputs = [],
+            outputs = new Array(samples.length),
             i = 0,
             s = 0,
             match = false,
@@ -396,9 +399,7 @@ const StrUtils = {
         }
 
         // Initialise output strings
-        for (s = 0; s < samples.length; s++) {
-            outputs[s] = "";
-        }
+        outputs.fill("", 0, samples.length);
 
         // Loop through each character in the first sample
         for (i = 0; i < samples[0].length; i++) {
@@ -423,7 +424,7 @@ const StrUtils = {
                 }
 
                 if (match && !inMatch) {
-                    outputs[s] += "<span class='hlgreen'>" + Utils.escapeHtml(samples[s][i]);
+                    outputs[s] += "<span class='hl5'>" + Utils.escapeHtml(samples[s][i]);
                     if (samples[s].length === i + 1) outputs[s] += "</span>";
                     if (s === samples.length - 1) inMatch = true;
                 } else if (!match && inMatch) {
@@ -472,19 +473,19 @@ const StrUtils = {
             number = args[1];
 
         delimiter = Utils.charRep[delimiter];
-        let splitInput = input.split(delimiter);
+        const splitInput = input.split(delimiter);
 
         return splitInput
-        .filter((line, lineIndex) => {
-            lineIndex += 1;
+            .filter((line, lineIndex) => {
+                lineIndex += 1;
 
-            if (number < 0) {
-                return lineIndex <= splitInput.length + number;
-            } else {
-                return lineIndex <= number;
-            }
-        })
-        .join(delimiter);
+                if (number < 0) {
+                    return lineIndex <= splitInput.length + number;
+                } else {
+                    return lineIndex <= number;
+                }
+            })
+            .join(delimiter);
     },
 
 
@@ -500,19 +501,19 @@ const StrUtils = {
             number = args[1];
 
         delimiter = Utils.charRep[delimiter];
-        let splitInput = input.split(delimiter);
+        const splitInput = input.split(delimiter);
 
         return splitInput
-        .filter((line, lineIndex) => {
-            lineIndex += 1;
+            .filter((line, lineIndex) => {
+                lineIndex += 1;
 
-            if (number < 0) {
-                return lineIndex > -number;
-            } else {
-                return lineIndex > splitInput.length - number;
-            }
-        })
-        .join(delimiter);
+                if (number < 0) {
+                    return lineIndex > -number;
+                } else {
+                    return lineIndex > splitInput.length - number;
+                }
+            })
+            .join(delimiter);
     },
 
 
@@ -526,7 +527,7 @@ const StrUtils = {
      * @returns {string}
      */
     _regexHighlight: function(input, regex, displayTotal) {
-        var output = "",
+        let output = "",
             m,
             hl = 1,
             i = 0,
@@ -568,7 +569,7 @@ const StrUtils = {
      * @returns {string}
      */
     _regexList: function(input, regex, displayTotal, matches, captureGroups) {
-        var output = "",
+        let output = "",
             total = 0,
             match;
 
@@ -578,7 +579,7 @@ const StrUtils = {
                 output += match[0] + "\n";
             }
             if (captureGroups) {
-                for (var i = 1; i < match.length; i++) {
+                for (let i = 1; i < match.length; i++) {
                     if (matches) {
                         output += "  Group " + i + ": ";
                     }
@@ -592,7 +593,6 @@ const StrUtils = {
 
         return output;
     },
-
 };
 
 export default StrUtils;

@@ -2,6 +2,7 @@ import FlowControl from "../FlowControl.js";
 import Base from "../operations/Base.js";
 import Base58 from "../operations/Base58.js";
 import Base64 from "../operations/Base64.js";
+import BCD from "../operations/BCD.js";
 import BitwiseOp from "../operations/BitwiseOp.js";
 import ByteRepr from "../operations/ByteRepr.js";
 import CharEnc from "../operations/CharEnc.js";
@@ -15,6 +16,7 @@ import Endian from "../operations/Endian.js";
 import Entropy from "../operations/Entropy.js";
 import Extract from "../operations/Extract.js";
 import FileType from "../operations/FileType.js";
+import Image from "../operations/Image.js";
 import Hash from "../operations/Hash.js";
 import Hexdump from "../operations/Hexdump.js";
 import HTML from "../operations/HTML.js";
@@ -161,6 +163,20 @@ const OperationConfig = {
         outputType: "string",
         flowControl: true,
         args: []
+    },
+    "Comment": {
+        description: "Provides a place to write comments within the flow of the recipe. This operation has no computational effect.",
+        run: FlowControl.runComment,
+        inputType: "string",
+        outputType: "string",
+        flowControl: true,
+        args: [
+            {
+                name: "",
+                type: "text",
+                value: ""
+            }
+        ]
     },
     "From Base64": {
         description: "Base64 is a notation for encoding arbitrary byte data using a restricted set of symbols that can be conveniently used by humans and processed by computers.<br><br>This operation decodes data from an ASCII Base64 string back into its raw format.<br><br>e.g. <code>aGVsbG8=</code> becomes <code>hello</code>",
@@ -315,29 +331,24 @@ const OperationConfig = {
                 value: BitwiseOp.XOR_BRUTE_KEY_LENGTH
             },
             {
-                name: "Length of sample",
+                name: "Sample length",
                 type: "number",
                 value: BitwiseOp.XOR_BRUTE_SAMPLE_LENGTH
             },
             {
-                name: "Offset of sample",
+                name: "Sample offset",
                 type: "number",
                 value: BitwiseOp.XOR_BRUTE_SAMPLE_OFFSET
+            },
+            {
+                name: "Scheme",
+                type: "option",
+                value: BitwiseOp.XOR_SCHEME
             },
             {
                 name: "Null preserving",
                 type: "boolean",
                 value: BitwiseOp.XOR_PRESERVE_NULLS
-            },
-            {
-                name: "Differential",
-                type: "boolean",
-                value: BitwiseOp.XOR_DIFFERENTIAL
-            },
-            {
-                name: "Crib (known plaintext string)",
-                type: "binaryString",
-                value: ""
             },
             {
                 name: "Print key",
@@ -348,6 +359,11 @@ const OperationConfig = {
                 name: "Output as hex",
                 type: "boolean",
                 value: BitwiseOp.XOR_BRUTE_OUTPUT_HEX
+            },
+            {
+                name: "Crib (known plaintext string)",
+                type: "binaryString",
+                value: ""
             }
         ]
     },
@@ -590,7 +606,7 @@ const OperationConfig = {
         args: []
     },
     "To Hexdump": {
-        description: "Creates a hexdump of the input data, displaying both the hexademinal values of each byte and an ASCII representation alongside.",
+        description: "Creates a hexdump of the input data, displaying both the hexadecimal values of each byte and an ASCII representation alongside.",
         run: Hexdump.runTo,
         highlight: Hexdump.highlightTo,
         highlightReverse: Hexdump.highlightFrom,
@@ -872,21 +888,43 @@ const OperationConfig = {
             }
         ]
     },
-    "Text encoding": {
-        description: "Translates the data between different character encodings.<br><br>Supported charsets are:<ul><li>UTF8</li><li>UTF16</li><li>UTF16LE (little-endian)</li><li>UTF16BE (big-endian)</li><li>Hex</li><li>Base64</li><li>Latin1 (ISO-8859-1)</li><li>Windows-1251</li></ul>",
-        run: CharEnc.run,
+    "Encode text": {
+        description: [
+            "Encodes text into the chosen character encoding.",
+            "<br><br>",
+            "Supported charsets are:",
+            "<ul>",
+            Object.keys(CharEnc.IO_FORMAT).map(e => `<li>${e}</li>`).join("\n"),
+            "</ul>",
+        ].join("\n"),
+        run: CharEnc.runEncode,
         inputType: "string",
+        outputType: "byteArray",
+        args: [
+            {
+                name: "Encoding",
+                type: "option",
+                value: Object.keys(CharEnc.IO_FORMAT),
+            },
+        ]
+    },
+    "Decode text": {
+        description: [
+            "Decodes text from the chosen character encoding.",
+            "<br><br>",
+            "Supported charsets are:",
+            "<ul>",
+            Object.keys(CharEnc.IO_FORMAT).map(e => `<li>${e}</li>`).join("\n"),
+            "</ul>",
+        ].join("\n"),
+        run: CharEnc.runDecode,
+        inputType: "byteArray",
         outputType: "string",
         args: [
             {
-                name: "Input type",
+                name: "Encoding",
                 type: "option",
-                value: CharEnc.IO_FORMAT
-            },
-            {
-                name: "Output type",
-                type: "option",
-                value: CharEnc.IO_FORMAT
+                value: Object.keys(CharEnc.IO_FORMAT),
             },
         ]
     },
@@ -907,7 +945,6 @@ const OperationConfig = {
                 type: "toggleString",
                 value: "",
                 toggleValues: Cipher.IO_FORMAT1
-
             },
             {
                 name: "Salt",
@@ -954,7 +991,6 @@ const OperationConfig = {
                 type: "toggleString",
                 value: "",
                 toggleValues: Cipher.IO_FORMAT1
-
             },
             {
                 name: "Salt",
@@ -1388,6 +1424,11 @@ const OperationConfig = {
                 value: Cipher.KDF_ITERATIONS
             },
             {
+                name: "Hashing function",
+                type: "option",
+                value: Cipher.HASHERS
+            },
+            {
                 name: "Salt (hex)",
                 type: "string",
                 value: ""
@@ -1419,6 +1460,11 @@ const OperationConfig = {
                 name: "Iterations",
                 type: "number",
                 value: Cipher.KDF_ITERATIONS
+            },
+            {
+                name: "Hashing function",
+                type: "option",
+                value: Cipher.HASHERS
             },
             {
                 name: "Salt (hex)",
@@ -1462,6 +1508,36 @@ const OperationConfig = {
         args: [
             {
                 name: "Key",
+                type: "string",
+                value: ""
+            }
+        ]
+    },
+    "Bifid Cipher Encode": {
+        description: "The Bifid cipher is a cipher which uses a Polybius square in conjunction with transposition, which can be fairly difficult to decipher without knowing the alphabet keyword.",
+        run: Cipher.runBifidEnc,
+        highlight: true,
+        highlightReverse: true,
+        inputType: "string",
+        outputType: "string",
+        args: [
+            {
+                name: "Keyword",
+                type: "string",
+                value: ""
+            }
+        ]
+    },
+    "Bifid Cipher Decode": {
+        description: "The Bifid cipher is a cipher which uses a Polybius square in conjunction with transposition, which can be fairly difficult to decipher without knowing the alphabet keyword.",
+        run: Cipher.runBifidDec,
+        highlight: true,
+        highlightReverse: true,
+        inputType: "string",
+        outputType: "string",
+        args: [
+            {
+                name: "Keyword",
                 type: "string",
                 value: ""
             }
@@ -1890,7 +1966,7 @@ const OperationConfig = {
         args: []
     },
     "Find / Replace": {
-        description: "Replaces all occurrences of the first string with the second.<br><br>The three match options are only relevant to regex search strings.",
+        description: "Replaces all occurrences of the first string with the second.<br><br> Includes support for regular expressions (regex), simple strings and extended strings (which support \\n, \\r, \\t, \\b, \\f and escaped hex bytes using \\x notation, e.g. \\x00 for a null byte).",
         run: StrUtils.runFindReplace,
         manualBake: true,
         inputType: "string",
@@ -2202,7 +2278,7 @@ const OperationConfig = {
         ]
     },
     "From UNIX Timestamp": {
-        description: "Converts a UNIX timestamp to a datetime string.<br><br>e.g. <code>978346800</code> becomes <code>Mon 1 January 2001 11:00:00 UTC</code>",
+        description: "Converts a UNIX timestamp to a datetime string.<br><br>e.g. <code>978346800</code> becomes <code>Mon 1 January 2001 11:00:00 UTC</code><br><br>A UNIX timestamp is a 32-bit value representing the number of seconds since January 1, 1970 UTC (the UNIX epoch).",
         run: DateTime.runFromUnixTimestamp,
         inputType: "number",
         outputType: "string",
@@ -2215,7 +2291,7 @@ const OperationConfig = {
         ]
     },
     "To UNIX Timestamp": {
-        description: "Parses a datetime string and returns the corresponding UNIX timestamp.<br><br>e.g. <code>Mon 1 January 2001 11:00:00 UTC</code> becomes <code>978346800</code>",
+        description: "Parses a datetime string in UTC and returns the corresponding UNIX timestamp.<br><br>e.g. <code>Mon 1 January 2001 11:00:00</code> becomes <code>978346800</code><br><br>A UNIX timestamp is a 32-bit value representing the number of seconds since January 1, 1970 UTC (the UNIX epoch).",
         run: DateTime.runToUnixTimestamp,
         inputType: "string",
         outputType: "number",
@@ -2224,6 +2300,47 @@ const OperationConfig = {
                 name: "Units",
                 type: "option",
                 value: DateTime.UNITS
+            },
+            {
+                name: "Treat as UTC",
+                type: "boolean",
+                value: DateTime.TREAT_AS_UTC
+            }
+        ]
+    },
+    "Windows Filetime to UNIX Timestamp": {
+        description: "Converts a Windows Filetime value to a UNIX timestamp.<br><br>A Windows Filetime is a 64-bit value representing the number of 100-nanosecond intervals since January 1, 1601 UTC.<br><br>A UNIX timestamp is a 32-bit value representing the number of seconds since January 1, 1970 UTC (the UNIX epoch).<br><br>This operation also supports UNIX timestamps in milliseconds, microseconds and nanoseconds.",
+        run: DateTime.runFromFiletimeToUnix,
+        inputType: "string",
+        outputType: "string",
+        args: [
+            {
+                name: "Output units",
+                type: "option",
+                value: DateTime.UNITS
+            },
+            {
+                name: "Input format",
+                type: "option",
+                value: DateTime.FILETIME_FORMATS
+            }
+        ]
+    },
+    "UNIX Timestamp to Windows Filetime": {
+        description: "Converts a UNIX timestamp to a Windows Filetime value.<br><br>A Windows Filetime is a 64-bit value representing the number of 100-nanosecond intervals since January 1, 1601 UTC.<br><br>A UNIX timestamp is a 32-bit value representing the number of seconds since January 1, 1970 UTC (the UNIX epoch).<br><br>This operation also supports UNIX timestamps in milliseconds, microseconds and nanoseconds.",
+        run: DateTime.runToFiletimeFromUnix,
+        inputType: "string",
+        outputType: "string",
+        args: [
+            {
+                name: "Input units",
+                type: "option",
+                value: DateTime.UNITS
+            },
+            {
+                name: "Output format",
+                type: "option",
+                value: DateTime.FILETIME_FORMATS
             }
         ]
     },
@@ -3136,8 +3253,8 @@ const OperationConfig = {
     "Substitute": {
         description: "A substitution cipher allowing you to specify bytes to replace with other byte values. This can be used to create Caesar ciphers but is more powerful as any byte value can be substituted, not just letters, and the substitution values need not be in order.<br><br>Enter the bytes you want to replace in the Plaintext field and the bytes to replace them with in the Ciphertext field.<br><br>Non-printable bytes can be specified using string escape notation. For example, a line feed character can be written as either <code>\\n</code> or <code>\\x0a</code>.<br><br>Byte ranges can be specified using a hyphen. For example, the sequence <code>0123456789</code> can be written as <code>0-9</code>.",
         run: Cipher.runSubstitute,
-        inputType: "byteArray",
-        outputType: "byteArray",
+        inputType: "string",
+        outputType: "string",
         args: [
             {
                 name: "Plaintext",
@@ -3264,6 +3381,206 @@ const OperationConfig = {
                 value: 10,
             },
         ]
+    },
+    "To Snake case": {
+        description: [
+            "Converts the input string to snake case.",
+            "<br><br>",
+            "Snake case is all lower case with underscores as word boundaries.",
+            "<br><br>",
+            "e.g. this_is_snake_case",
+            "<br><br>",
+            "'Attempt to be context aware' will make the operation attempt to nicely transform variable and function names.",
+        ].join("\n"),
+        run: Code.runToSnakeCase,
+        inputType: "string",
+        outputType: "string",
+        args: [
+            {
+                name: "Attempt to be context aware",
+                type: "boolean",
+                value: false,
+            },
+        ]
+    },
+    "To Camel case": {
+        description: [
+            "Converts the input string to camel case.",
+            "<br><br>",
+            "Camel case is all lower case except letters after word boundaries which are uppercase.",
+            "<br><br>",
+            "e.g. thisIsCamelCase",
+            "<br><br>",
+            "'Attempt to be context aware' will make the operation attempt to nicely transform variable and function names.",
+        ].join("\n"),
+        run: Code.runToCamelCase,
+        inputType: "string",
+        outputType: "string",
+        args: [
+            {
+                name: "Attempt to be context aware",
+                type: "boolean",
+                value: false,
+            },
+        ]
+    },
+    "To Kebab case": {
+        description: [
+            "Converts the input string to kebab case.",
+            "<br><br>",
+            "Kebab case is all lower case with dashes as word boundaries.",
+            "<br><br>",
+            "e.g. this-is-kebab-case",
+            "<br><br>",
+            "'Attempt to be context aware' will make the operation attempt to nicely transform variable and function names.",
+        ].join("\n"),
+        run: Code.runToKebabCase,
+        inputType: "string",
+        outputType: "string",
+        args: [
+            {
+                name: "Attempt to be context aware",
+                type: "boolean",
+                value: false,
+            },
+        ]
+    },
+    "Extract EXIF": {
+        description: [
+            "Extracts EXIF data from an image.",
+            "<br><br>",
+            "EXIF data is metadata embedded in images (JPEG, JPG, TIFF) and audio files.",
+            "<br><br>",
+            "EXIF data from photos usually contains information about the image file itself as well as the device used to create it.",
+        ].join("\n"),
+        run: Image.runExtractEXIF,
+        inputType: "byteArray",
+        outputType: "string",
+        args: [],
+    },
+    "Render Image": {
+        description: "Displays the input as an image. Supports the following formats:<br><br><ul><li>jpg/jpeg</li><li>png</li><li>gif</li><li>webp</li><li>bmp</li><li>ico</li></ul>",
+        run: Image.runRenderImage,
+        inputType: "string",
+        outputType: "html",
+        args: [
+            {
+                name: "Input format",
+                type: "option",
+                value: Image.INPUT_FORMAT
+            }
+        ]
+    },
+    "Remove EXIF": {
+        description: [
+            "Removes EXIF data from a JPEG image.",
+            "<br><br>",
+            "EXIF data embedded in photos usually contains information about the image file itself as well as the device used to create it.",
+        ].join("\n"),
+        run: Image.runRemoveEXIF,
+        inputType: "byteArray",
+        outputType: "byteArray",
+        args: []
+    },
+    "HTTP request": {
+        description: [
+            "Makes an HTTP request and returns the response.",
+            "<br><br>",
+            "This operation supports different HTTP verbs like GET, POST, PUT, etc.",
+            "<br><br>",
+            "You can add headers line by line in the format <code>Key: Value</code>",
+            "<br><br>",
+            "The status code of the response, along with a limited selection of exposed headers, can be viewed by checking the 'Show response metadata' option. Only a limited set of response headers are exposed by the browser for security reasons.",
+        ].join("\n"),
+        run: HTTP.runHTTPRequest,
+        inputType: "string",
+        outputType: "string",
+        manualBake: true,
+        args: [
+            {
+                name: "Method",
+                type: "option",
+                value: HTTP.METHODS,
+            },
+            {
+                name: "URL",
+                type: "string",
+                value: "",
+            },
+            {
+                name: "Headers",
+                type: "text",
+                value: "",
+            },
+            {
+                name: "Mode",
+                type: "option",
+                value: HTTP.MODE,
+            },
+            {
+                name: "Show response metadata",
+                type: "boolean",
+                value: false,
+            }
+        ]
+    },
+    "From BCD": {
+        description: "Binary-Coded Decimal (BCD) is a class of binary encodings of decimal numbers where each decimal digit is represented by a fixed number of bits, usually four or eight. Special bit patterns are sometimes used for a sign.",
+        run: BCD.runFromBCD,
+        inputType: "string",
+        outputType: "number",
+        args: [
+            {
+                name: "Scheme",
+                type: "option",
+                value: BCD.ENCODING_SCHEME
+            },
+            {
+                name: "Packed",
+                type: "boolean",
+                value: true
+            },
+            {
+                name: "Signed",
+                type: "boolean",
+                value: false
+            },
+            {
+                name: "Input format",
+                type: "option",
+                value: BCD.FORMAT
+            }
+        ]
+
+    },
+    "To BCD": {
+        description: "Binary-Coded Decimal (BCD) is a class of binary encodings of decimal numbers where each decimal digit is represented by a fixed number of bits, usually four or eight. Special bit patterns are sometimes used for a sign",
+        run: BCD.runToBCD,
+        inputType: "number",
+        outputType: "string",
+        args: [
+            {
+                name: "Scheme",
+                type: "option",
+                value: BCD.ENCODING_SCHEME
+            },
+            {
+                name: "Packed",
+                type: "boolean",
+                value: true
+            },
+            {
+                name: "Signed",
+                type: "boolean",
+                value: false
+            },
+            {
+                name: "Output format",
+                type: "option",
+                value: BCD.FORMAT
+            }
+        ]
+
     },
 };
 

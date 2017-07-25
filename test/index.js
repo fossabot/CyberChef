@@ -12,16 +12,23 @@ import "babel-polyfill";
 
 import TestRegister from "./TestRegister.js";
 import "./tests/operations/Base58.js";
+import "./tests/operations/BCD.js";
 import "./tests/operations/ByteRepr.js";
+import "./tests/operations/CharEnc.js";
+import "./tests/operations/Cipher.js";
+import "./tests/operations/Code.js";
 import "./tests/operations/Compress.js";
+import "./tests/operations/DateTime.js";
 import "./tests/operations/FlowControl.js";
+import "./tests/operations/Image.js";
 import "./tests/operations/MorseCode.js";
 import "./tests/operations/StrUtils.js";
+import "./tests/operations/SeqUtils.js";
 
-var allTestsPassing = true,
-    testStatusCounts = {
-        total: 0,
-    };
+let allTestsPassing = true;
+const testStatusCounts = {
+    total: 0,
+};
 
 
 /**
@@ -31,7 +38,7 @@ var allTestsPassing = true,
  * @returns {string}
  */
 function statusToIcon(status) {
-    var icons = {
+    const icons = {
         erroring: "🔥",
         failing: "❌",
         passing: "✔️️",
@@ -47,7 +54,7 @@ function statusToIcon(status) {
  */
 function handleTestResult(testResult) {
     allTestsPassing = allTestsPassing && testResult.status === "passing";
-    var newCount = (testStatusCounts[testResult.status] || 0) + 1;
+    const newCount = (testStatusCounts[testResult.status] || 0) + 1;
     testStatusCounts[testResult.status] = newCount;
     testStatusCounts.total += 1;
 
@@ -73,7 +80,7 @@ function handleTestResult(testResult) {
 setTimeout(function() {
     console.log("Tests took longer than 10 seconds to run, returning.");
     process.exit(1);
-}, 1 * 1000);
+}, 10 * 1000);
 
 
 TestRegister.runTests()
@@ -82,8 +89,8 @@ TestRegister.runTests()
 
         console.log("\n");
 
-        for (var testStatus in testStatusCounts) {
-            var count = testStatusCounts[testStatus];
+        for (const testStatus in testStatusCounts) {
+            const count = testStatusCounts[testStatus];
             if (count > 0) {
                 console.log(testStatus.toUpperCase(), count);
             }

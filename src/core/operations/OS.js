@@ -17,26 +17,26 @@ const OS = {
      * @returns {string}
      */
     runParseUnixPerms: function(input, args) {
-        var perms = {
-                d : false,  // directory
-                sl : false, // symbolic link
-                np : false, // named pipe
-                s : false,  // socket
-                cd : false, // character device
-                bd : false, // block device
-                dr : false, // door
-                sb : false, // sticky bit
-                su : false, // setuid
-                sg : false, // setgid
-                ru : false, // read user
-                wu : false, // write user
-                eu : false, // execute user
-                rg : false, // read group
-                wg : false, // write group
-                eg : false, // execute group
-                ro : false, // read other
-                wo : false, // write other
-                eo : false // execute other
+        let perms = {
+                d:  false, // directory
+                sl: false, // symbolic link
+                np: false, // named pipe
+                s:  false, // socket
+                cd: false, // character device
+                bd: false, // block device
+                dr: false, // door
+                sb: false, // sticky bit
+                su: false, // setuid
+                sg: false, // setgid
+                ru: false, // read user
+                wu: false, // write user
+                eu: false, // execute user
+                rg: false, // read group
+                wg: false, // write group
+                eg: false, // execute group
+                ro: false, // read other
+                wo: false, // write other
+                eo: false  // execute other
             },
             d = 0,
             u = 0,
@@ -202,7 +202,7 @@ const OS = {
      * @returns {string}
      */
     _permsToStr: function(perms) {
-        var str = "",
+        let str = "",
             type = "-";
 
         if (perms.d) type = "d";
@@ -263,7 +263,7 @@ const OS = {
      * @returns {string}
      */
     _permsToOctal: function(perms) {
-        var d = 0,
+        let d = 0,
             u = 0,
             g = 0,
             o = 0;

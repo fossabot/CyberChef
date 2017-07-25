@@ -7,19 +7,19 @@
  */
 require("babel-polyfill");
 
-var Chef = require("../core/Chef.js").default;
+const Chef = require("../core/Chef.js").default;
 
 const CyberChef = module.exports = {
 
     bake: function(input, recipeConfig) {
         this.chef = new Chef();
         return this.chef.bake(
-		input,
-		recipeConfig,
-		{},
-		0,
-		false
-	);
+            input,
+            recipeConfig,
+            {},
+            0,
+            false
+        );
     }
 
 };

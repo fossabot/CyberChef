@@ -1,4 +1,4 @@
-import esprima from "esprima";
+import * as esprima from "esprima";
 import escodegen from "escodegen";
 import esmangle from "esmangle";
 
@@ -48,7 +48,7 @@ const JS = {
      * @returns {string}
      */
     runParse: function (input, args) {
-        var parseLoc = args[0],
+        let parseLoc = args[0],
             parseRange = args[1],
             parseTokens = args[2],
             parseComment = args[3],
@@ -62,7 +62,7 @@ const JS = {
                 tolerant: parseTolerant
             };
 
-        result = esprima.parse(input, options);
+        result = esprima.parseScript(input, options);
         return JSON.stringify(result, null, 2);
     },
 
@@ -96,7 +96,7 @@ const JS = {
      * @returns {string}
      */
     runBeautify: function(input, args) {
-        var beautifyIndent = args[0] || JS.BEAUTIFY_INDENT,
+        let beautifyIndent = args[0] || JS.BEAUTIFY_INDENT,
             quotes = args[1].toLowerCase(),
             beautifySemicolons = args[2],
             beautifyComment = args[3],
@@ -104,13 +104,13 @@ const JS = {
             AST;
 
         try {
-            AST = esprima.parse(input, {
+            AST = esprima.parseScript(input, {
                 range: true,
                 tokens: true,
                 comment: true
             });
 
-            var options = {
+            const options = {
                 format: {
                     indent: {
                         style: beautifyIndent
@@ -141,8 +141,8 @@ const JS = {
      * @returns {string}
      */
     runMinify: function(input, args) {
-        var result = "",
-            AST = esprima.parse(input),
+        let result = "",
+            AST = esprima.parseScript(input),
             optimisedAST = esmangle.optimize(AST, null),
             mangledAST = esmangle.mangle(optimisedAST);
 

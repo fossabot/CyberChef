@@ -46,6 +46,8 @@ const Categories = [
             "From Base58",
             "To Base",
             "From Base",
+            "To BCD",
+            "From BCD",
             "To HTML Entity",
             "From HTML Entity",
             "URL Encode",
@@ -61,7 +63,8 @@ const Categories = [
             "Hex to PEM",
             "Parse ASN.1 hex string",
             "Change IP format",
-            "Text encoding",
+            "Encode text",
+            "Decode text",
             "Swap endianness",
         ]
     },
@@ -88,6 +91,8 @@ const Categories = [
             "Vigenère Decode",
             "To Morse Code",
             "From Morse Code",
+            "Bifid Cipher Encode",
+            "Bifid Cipher Decode",
             "Affine Cipher Encode",
             "Affine Cipher Decode",
             "Atbash Cipher",
@@ -125,6 +130,7 @@ const Categories = [
     {
         name: "Networking",
         ops: [
+            "HTTP request",
             "Strip HTTP headers",
             "Parse User Agent",
             "Parse IP range",
@@ -143,7 +149,8 @@ const Categories = [
     {
         name: "Language",
         ops: [
-            "Text encoding",
+            "Encode text",
+            "Decode text",
             "Unescape Unicode Characters",
         ]
     },
@@ -190,6 +197,8 @@ const Categories = [
             "Translate DateTime Format",
             "From UNIX Timestamp",
             "To UNIX Timestamp",
+            "Windows Filetime to UNIX Timestamp",
+            "UNIX Timestamp to Windows Filetime",
             "Extract dates",
         ]
     },
@@ -207,6 +216,7 @@ const Categories = [
             "Regular expression",
             "XPath expression",
             "CSS selector",
+            "Extract EXIF",
         ]
     },
     {
@@ -271,6 +281,9 @@ const Categories = [
             "CSS selector",
             "Strip HTML tags",
             "Diff",
+            "To Snake case",
+            "To Camel case",
+            "To Kebab case",
         ]
     },
     {
@@ -281,6 +294,9 @@ const Categories = [
             "Detect File Type",
             "Scan for Embedded Files",
             "Generate UUID",
+            "Render Image",
+            "Remove EXIF",
+            "Extract EXIF",
             "Numberwang",
         ]
     },
@@ -292,6 +308,7 @@ const Categories = [
             "Jump",
             "Conditional Jump",
             "Return",
+            "Comment"
         ]
     },
 ];

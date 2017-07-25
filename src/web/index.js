@@ -4,8 +4,8 @@
  * @license Apache-2.0
  */
 
-// CSS
-import "./css/index.js";
+// Styles
+import "./stylesheets/index.js";
 
 // Libs
 import "babel-polyfill";
@@ -23,8 +23,8 @@ import OperationConfig from "../core/config/OperationConfig.js";
 /**
  * Main function used to build the CyberChef web app.
  */
-var main = function() {
-    var defaultFavourites = [
+function main() {
+    const defaultFavourites = [
         "To Base64",
         "From Base64",
         "To Hex",
@@ -37,21 +37,22 @@ var main = function() {
         "Fork"
     ];
 
-    var defaultOptions = {
-        updateUrl         : true,
-        showHighlighter   : true,
-        treatAsUtf8       : true,
-        wordWrap          : true,
-        showErrors        : true,
-        errorTimeout      : 4000,
-        autoBakeThreshold : 200,
-        attemptHighlight  : true,
+    const defaultOptions = {
+        updateUrl:         true,
+        showHighlighter:   true,
+        treatAsUtf8:       true,
+        wordWrap:          true,
+        showErrors:        true,
+        errorTimeout:      4000,
+        autoBakeThreshold: 200,
+        attemptHighlight:  true,
+        theme:             "classic",
     };
 
     document.removeEventListener("DOMContentLoaded", main, false);
     window.app = new App(Categories, OperationConfig, defaultFavourites, defaultOptions);
     window.app.setup();
-};
+}
 
 // Fix issues with browsers that don't support console.log()
 window.console = console || {log: function() {}, error: function() {}};

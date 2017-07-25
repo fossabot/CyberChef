@@ -26,17 +26,19 @@ const BitwiseOp = {
      */
     _bitOp: function (input, key, func, nullPreserving, scheme) {
         if (!key || !key.length) key = [0];
-        var result = [],
+        let result = [],
             x = null,
             k = null,
             o = null;
 
-        for (var i = 0; i < input.length; i++) {
+        for (let i = 0; i < input.length; i++) {
             k = key[i % key.length];
             o = input[i];
             x = nullPreserving && (o === 0 || o === k) ? o : func(o, k);
             result.push(x);
-            if (scheme !== "Standard" && !(nullPreserving && (o === 0 || o === k))) {
+            if (scheme &&
+                scheme !== "Standard" &&
+                !(nullPreserving && (o === 0 || o === k))) {
                 switch (scheme) {
                     case "Input differential":
                         key[i % key.length] = x;
@@ -76,7 +78,7 @@ const BitwiseOp = {
      * @returns {byteArray}
      */
     runXor: function (input, args) {
-        var key = Utils.format[args[0].option].parse(args[0].string || ""),
+        let key = Utils.format[args[0].option].parse(args[0].string || ""),
             scheme = args[1],
             nullPreserving = args[2];
 
@@ -120,19 +122,19 @@ const BitwiseOp = {
      * @returns {string}
      */
     runXorBrute: function (input, args) {
-        var keyLength = parseInt(args[0], 10),
+        const keyLength = parseInt(args[0], 10),
             sampleLength = args[1],
             sampleOffset = args[2],
-            nullPreserving = args[3],
-            differential = args[4],
-            crib = args[5],
-            printKey = args[6],
-            outputHex = args[7],
-            regex;
+            scheme = args[3],
+            nullPreserving = args[4],
+            printKey = args[5],
+            outputHex = args[6],
+            crib = args[7];
 
-        var output = "",
+        let output = "",
             result,
-            resultUtf8;
+            resultUtf8,
+            regex;
 
         input = input.slice(sampleOffset, sampleOffset + sampleLength);
 
@@ -141,15 +143,13 @@ const BitwiseOp = {
         }
 
 
-        for (var key = 1, l = Math.pow(256, keyLength); key < l; key++) {
-            result = BitwiseOp._bitOp(input, Utils.hexToByteArray(key.toString(16)), BitwiseOp._xor, nullPreserving, differential);
+        for (let key = 1, l = Math.pow(256, keyLength); key < l; key++) {
+            result = BitwiseOp._bitOp(input, Utils.fromHex(key.toString(16)), BitwiseOp._xor, nullPreserving, scheme);
             resultUtf8 = Utils.byteArrayToUtf8(result);
             if (crib !== "" && resultUtf8.search(regex) === -1) continue;
             if (printKey) output += "Key = " + Utils.hex(key, (2*keyLength)) + ": ";
-            if (outputHex)
-                output += Utils.byteArrayToHex(result) + "\n";
-            else
-                output += Utils.printable(resultUtf8, false) + "\n";
+            if (outputHex) output += Utils.toHex(result) + "\n";
+            else output += Utils.printable(resultUtf8, false) + "\n";
             if (printKey) output += "\n";
         }
         return output;
@@ -176,7 +176,7 @@ const BitwiseOp = {
      * @returns {byteArray}
      */
     runAnd: function (input, args) {
-        var key = Utils.format[args[0].option].parse(args[0].string || "");
+        let key = Utils.format[args[0].option].parse(args[0].string || "");
         key = Utils.wordArrayToByteArray(key);
 
         return BitwiseOp._bitOp(input, key, BitwiseOp._and);
@@ -191,7 +191,7 @@ const BitwiseOp = {
      * @returns {byteArray}
      */
     runOr: function (input, args) {
-        var key = Utils.format[args[0].option].parse(args[0].string || "");
+        let key = Utils.format[args[0].option].parse(args[0].string || "");
         key = Utils.wordArrayToByteArray(key);
 
         return BitwiseOp._bitOp(input, key, BitwiseOp._or);
@@ -206,7 +206,7 @@ const BitwiseOp = {
      * @returns {byteArray}
      */
     runAdd: function (input, args) {
-        var key = Utils.format[args[0].option].parse(args[0].string || "");
+        let key = Utils.format[args[0].option].parse(args[0].string || "");
         key = Utils.wordArrayToByteArray(key);
 
         return BitwiseOp._bitOp(input, key, BitwiseOp._add);
@@ -221,7 +221,7 @@ const BitwiseOp = {
      * @returns {byteArray}
      */
     runSub: function (input, args) {
-        var key = Utils.format[args[0].option].parse(args[0].string || "");
+        let key = Utils.format[args[0].option].parse(args[0].string || "");
         key = Utils.wordArrayToByteArray(key);
 
         return BitwiseOp._bitOp(input, key, BitwiseOp._sub);
@@ -301,7 +301,7 @@ const BitwiseOp = {
      * @returns {number}
      */
     _sub: function (operand, key) {
-        var result = operand - key;
+        const result = operand - key;
         return (result < 0) ? 256 + result : result;
     },
 

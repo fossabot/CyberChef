@@ -1,7 +1,7 @@
-var webpack = require("webpack"),
-    ExtractTextPlugin = require("extract-text-webpack-plugin"),
-    HtmlWebpackPlugin = require("html-webpack-plugin"),
-    Inliner = require("web-resource-inliner");
+const webpack = require("webpack");
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const Inliner = require("web-resource-inliner");
 
 module.exports = function (grunt) {
     grunt.file.defaultEncoding = "utf8";
@@ -54,7 +54,7 @@ module.exports = function (grunt) {
 
 
     // Project configuration
-    var compileTime = grunt.template.today("dd/mm/yyyy HH:MM:ss") + " UTC",
+    const compileTime = grunt.template.today("UTC:dd/mm/yyyy HH:MM:ss") + " UTC",
         banner = "/**\n" +
             "* CyberChef - The Cyber Swiss Army Knife\n" +
             "*\n" +
@@ -74,13 +74,14 @@ module.exports = function (grunt) {
             "* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n" +
             "* See the License for the specific language governing permissions and\n" +
             "* limitations under the License.\n" +
-            "*/\n";
+            "*/\n",
+        pkg = grunt.file.readJSON("package.json");
 
     /**
      * Compiles a production build of CyberChef into a single, portable web page.
      */
     function runInliner() {
-        var inlinerError = false;
+        const done = this.async();
         Inliner.html({
             relativeTo: "build/prod/",
             fileContent: grunt.file.read("build/prod/cyberchef.htm"),
@@ -91,14 +92,16 @@ module.exports = function (grunt) {
             strict: true
         }, function(error, result) {
             if (error) {
-                console.log(error);
-                inlinerError = true;
-                return false;
+                if (error instanceof Error) {
+                    done(error);
+                } else {
+                    done(new Error(error));
+                }
+            } else {
+                grunt.file.write("build/prod/cyberchef.htm", result);
+                done(true);
             }
-            grunt.file.write("build/prod/cyberchef.htm", result);
         });
-
-        return !inlinerError;
     }
 
     grunt.initConfig({
@@ -111,7 +114,7 @@ module.exports = function (grunt) {
         },
         eslint: {
             options: {
-                configFile: "src/.eslintrc.json"
+                configFile: "./.eslintrc.json"
             },
             configs: ["Gruntfile.js"],
             core: ["src/core/**/*.js", "!src/core/lib/**/*"],
@@ -161,7 +164,8 @@ module.exports = function (grunt) {
                     }),
                     new webpack.DefinePlugin({
                         COMPILE_TIME: JSON.stringify(compileTime),
-                        COMPILE_MSG: JSON.stringify(grunt.option("compile-msg") || grunt.option("msg") || "")
+                        COMPILE_MSG: JSON.stringify(grunt.option("compile-msg") || grunt.option("msg") || ""),
+                        PKG_VERSION: JSON.stringify(pkg.version)
                     }),
                     new ExtractTextPlugin("styles.css"),
                 ],
@@ -180,7 +184,10 @@ module.exports = function (grunt) {
                         {
                             test: /\.css$/,
                             use: ExtractTextPlugin.extract({
-                                use: "css-loader?minimize"
+                                use: [
+                                    { loader: "css-loader?minimize" },
+                                    { loader: "postcss-loader" },
+                                ]
                             })
                         },
                         {
@@ -188,6 +195,7 @@ module.exports = function (grunt) {
                             use: ExtractTextPlugin.extract({
                                 use: [
                                     { loader: "css-loader?minimize" },
+                                    { loader: "postcss-loader" },
                                     { loader: "less-loader" }
                                 ]
                             })
@@ -218,7 +226,8 @@ module.exports = function (grunt) {
                     ]
                 },
                 stats: {
-                    children: false
+                    children: false,
+                    warningsFilter: /source-map/
                 }
             },
             webDev: {
@@ -232,7 +241,8 @@ module.exports = function (grunt) {
                     new HtmlWebpackPlugin({
                         filename: "index.html",
                         template: "./src/web/html/index.html",
-                        compileTime: compileTime
+                        compileTime: compileTime,
+                        version: pkg.version,
                     })
                 ],
                 watch: true
@@ -258,6 +268,7 @@ module.exports = function (grunt) {
                         filename: "index.html",
                         template: "./src/web/html/index.html",
                         compileTime: compileTime,
+                        version: pkg.version,
                         minify: {
                             removeComments: true,
                             collapseWhitespace: true,
@@ -269,6 +280,7 @@ module.exports = function (grunt) {
                         filename: "cyberchef.htm",
                         template: "./src/web/html/index.html",
                         compileTime: compileTime,
+                        version: pkg.version,
                         inline: true,
                         minify: {
                             removeComments: true,
@@ -301,7 +313,7 @@ module.exports = function (grunt) {
         copy: {
             ghPages: {
                 options: {
-                    process: function (content, srcpath) {
+                    process: function (content) {
                         // Add Google Analytics code to index.html
                         content = content.replace("</body></html>",
                             grunt.file.read("src/web/static/ga.html") + "</body></html>");
@@ -342,5 +354,4 @@ module.exports = function (grunt) {
             test: "build/test/index.js"
         },
     });
-
 };

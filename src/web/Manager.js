@@ -19,7 +19,7 @@ import SeasonalWaiter from "./SeasonalWaiter.js";
  * @constructor
  * @param {App} app - The main view object for CyberChef.
  */
-var Manager = function(app) {
+const Manager = function(app) {
     this.app = app;
 
     // Define custom events
@@ -145,6 +145,7 @@ Manager.prototype.initialiseEventListeners = function() {
     document.getElementById("output-html").addEventListener("mousemove", this.highlighter.outputHtmlMousemove.bind(this.highlighter));
     this.addMultiEventListener("#output-text", "mousedown dblclick select",  this.highlighter.outputMousedown, this.highlighter);
     this.addMultiEventListener("#output-html", "mousedown dblclick select",  this.highlighter.outputHtmlMousedown, this.highlighter);
+    this.addDynamicListener(".file-switch", "click", this.output.fileSwitch, this.output);
 
     // Options
     document.getElementById("options").addEventListener("click", this.options.optionsClick.bind(this.options));
@@ -154,6 +155,7 @@ Manager.prototype.initialiseEventListeners = function() {
     this.addDynamicListener(".option-item input[type=number]", "keyup", this.options.numberChange, this.options);
     this.addDynamicListener(".option-item input[type=number]", "change", this.options.numberChange, this.options);
     this.addDynamicListener(".option-item select", "change", this.options.selectChange, this.options);
+    document.getElementById("theme").addEventListener("change", this.options.themeChange.bind(this.options));
 
     // Misc
     document.getElementById("alert-close").addEventListener("click", this.app.alertCloseClick.bind(this.app));
@@ -195,8 +197,8 @@ Manager.prototype.addListeners = function(selector, eventType, callback, scope) 
  * this.addMultiEventListener("search", "keyup paste search", this.search, this);
  */
 Manager.prototype.addMultiEventListener = function(selector, eventTypes, callback, scope) {
-    var evs = eventTypes.split(" ");
-    for (var i = 0; i < evs.length; i++) {
+    const evs = eventTypes.split(" ");
+    for (let i = 0; i < evs.length; i++) {
         document.querySelector(selector).addEventListener(evs[i], callback.bind(scope));
     }
 };
@@ -216,8 +218,8 @@ Manager.prototype.addMultiEventListener = function(selector, eventTypes, callbac
  * this.addMultiEventListener(".saveable", "keyup paste", this.save, this);
  */
 Manager.prototype.addMultiEventListeners = function(selector, eventTypes, callback, scope) {
-    var evs = eventTypes.split(" ");
-    for (var i = 0; i < evs.length; i++) {
+    const evs = eventTypes.split(" ");
+    for (let i = 0; i < evs.length; i++) {
         this.addListeners(selector, evs[i], callback, scope);
     }
 };
@@ -238,7 +240,7 @@ Manager.prototype.addMultiEventListeners = function(selector, eventTypes, callba
  * this.addDynamicListener("button", "click", alert, this);
  */
 Manager.prototype.addDynamicListener = function(selector, eventType, callback, scope) {
-    var eventConfig = {
+    const eventConfig = {
         selector: selector,
         callback: callback.bind(scope || this)
     };
@@ -261,15 +263,16 @@ Manager.prototype.addDynamicListener = function(selector, eventType, callback, s
  * @param {Event} e - The event to be handled
  */
 Manager.prototype.dynamicListenerHandler = function(e) {
-    var handlers = this.dynamicHandlers[e.type],
-        matches = e.target.matches ||
-            e.target.webkitMatchesSelector ||
-            e.target.mozMatchesSelector ||
-            e.target.msMatchesSelector ||
-            e.target.oMatchesSelector;
+    const { type, target } = e;
+    const handlers = this.dynamicHandlers[type];
+    const matches = target.matches ||
+            target.webkitMatchesSelector ||
+            target.mozMatchesSelector ||
+            target.msMatchesSelector ||
+            target.oMatchesSelector;
 
-    for (var i = 0; i < handlers.length; i++) {
-        if (matches && e.target[matches.name](handlers[i].selector)) {
+    for (let i = 0; i < handlers.length; i++) {
+        if (matches && matches.call(target, handlers[i].selector)) {
             handlers[i].callback(e);
         }
     }

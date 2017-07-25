@@ -16,32 +16,32 @@ const Tidy = {
      * @constant
      * @default
      */
-    REMOVE_SPACES : true,
+    REMOVE_SPACES: true,
     /**
      * @constant
      * @default
      */
-    REMOVE_CARIAGE_RETURNS : true,
+    REMOVE_CARIAGE_RETURNS: true,
     /**
      * @constant
      * @default
      */
-    REMOVE_LINE_FEEDS : true,
+    REMOVE_LINE_FEEDS: true,
     /**
      * @constant
      * @default
      */
-    REMOVE_TABS : true,
+    REMOVE_TABS: true,
     /**
      * @constant
      * @default
      */
-    REMOVE_FORM_FEEDS : true,
+    REMOVE_FORM_FEEDS: true,
     /**
      * @constant
      * @default
      */
-    REMOVE_FULL_STOPS : false,
+    REMOVE_FULL_STOPS: false,
 
     /**
      * Remove whitespace operation.
@@ -51,7 +51,7 @@ const Tidy = {
      * @returns {string}
      */
     runRemoveWhitespace: function (input, args) {
-        var removeSpaces = args[0],
+        let removeSpaces = args[0],
             removeCariageReturns = args[1],
             removeLineFeeds = args[2],
             removeTabs = args[3],
@@ -77,8 +77,8 @@ const Tidy = {
      * @returns {byteArray}
      */
     runRemoveNulls: function (input, args) {
-        var output = [];
-        for (var i = 0; i < input.length; i++) {
+        const output = [];
+        for (let i = 0; i < input.length; i++) {
             if (input[i] !== 0) output.push(input[i]);
         }
         return output;
@@ -89,17 +89,17 @@ const Tidy = {
      * @constant
      * @default
      */
-    APPLY_TO_EACH_LINE : false,
+    APPLY_TO_EACH_LINE: false,
     /**
      * @constant
      * @default
      */
-    DROP_START : 0,
+    DROP_START: 0,
     /**
      * @constant
      * @default
      */
-    DROP_LENGTH : 5,
+    DROP_LENGTH: 5,
 
     /**
      * Drop bytes operation.
@@ -109,7 +109,7 @@ const Tidy = {
      * @returns {byteArray}
      */
     runDropBytes: function(input, args) {
-        var start = args[0],
+        let start = args[0],
             length = args[1],
             applyToEachLine = args[2];
 
@@ -120,10 +120,11 @@ const Tidy = {
             return input.slice(0, start).concat(input.slice(start+length, input.length));
 
         // Split input into lines
-        var lines = [],
-            line = [];
+        let lines = [],
+            line = [],
+            i;
 
-        for (var i = 0; i < input.length; i++) {
+        for (i = 0; i < input.length; i++) {
             if (input[i] === 0x0a) {
                 lines.push(line);
                 line = [];
@@ -133,7 +134,7 @@ const Tidy = {
         }
         lines.push(line);
 
-        var output = [];
+        let output = [];
         for (i = 0; i < lines.length; i++) {
             output = output.concat(lines[i].slice(0, start).concat(lines[i].slice(start+length, lines[i].length)));
             output.push(0x0a);
@@ -161,7 +162,7 @@ const Tidy = {
      * @returns {byteArray}
      */
     runTakeBytes: function(input, args) {
-        var start = args[0],
+        let start = args[0],
             length = args[1],
             applyToEachLine = args[2];
 
@@ -172,10 +173,11 @@ const Tidy = {
             return input.slice(start, start+length);
 
         // Split input into lines
-        var lines = [],
+        let lines = [],
             line = [];
+        let i;
 
-        for (var i = 0; i < input.length; i++) {
+        for (i = 0; i < input.length; i++) {
             if (input[i] === 0x0a) {
                 lines.push(line);
                 line = [];
@@ -185,7 +187,7 @@ const Tidy = {
         }
         lines.push(line);
 
-        var output = [];
+        let output = [];
         for (i = 0; i < lines.length; i++) {
             output = output.concat(lines[i].slice(start, start+length));
             output.push(0x0a);
@@ -198,17 +200,17 @@ const Tidy = {
      * @constant
      * @default
      */
-    PAD_POSITION : ["Start", "End"],
+    PAD_POSITION: ["Start", "End"],
     /**
      * @constant
      * @default
      */
-    PAD_LENGTH : 5,
+    PAD_LENGTH: 5,
     /**
      * @constant
      * @default
      */
-    PAD_CHAR : " ",
+    PAD_CHAR: " ",
 
     /**
      * Pad lines operation.
@@ -218,7 +220,7 @@ const Tidy = {
      * @returns {string}
      */
     runPad: function(input, args) {
-        var position = args[0],
+        let position = args[0],
             len = args[1],
             chr = args[2],
             lines = input.split("\n"),

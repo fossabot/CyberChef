@@ -20,12 +20,12 @@ const FileType = {
      * @returns {string}
      */
     runDetect: function(input, args) {
-        var type = FileType._magicType(input);
+        const type = FileType.magicType(input);
 
         if (!type) {
             return "Unknown file type. Have you tried checking the entropy of this data to determine whether it might be encrypted or compressed?";
         } else {
-            var output = "File extension: " + type.ext + "\n" +
+            let output = "File extension: " + type.ext + "\n" +
                 "MIME type:      " + type.mime;
 
             if (type.desc && type.desc.length) {
@@ -51,15 +51,15 @@ const FileType = {
      * @returns {string}
      */
     runScanForEmbeddedFiles: function(input, args) {
-        var output = "Scanning data for 'magic bytes' which may indicate embedded files. The following results may be false positives and should not be treat as reliable. Any suffiently long file is likely to contain these magic bytes coincidentally.\n",
+        let output = "Scanning data for 'magic bytes' which may indicate embedded files. The following results may be false positives and should not be treat as reliable. Any suffiently long file is likely to contain these magic bytes coincidentally.\n",
             type,
             ignoreCommon = args[0],
             commonExts = ["ico", "ttf", ""],
             numFound = 0,
             numCommonFound = 0;
 
-        for (var i = 0; i < input.length; i++) {
-            type = FileType._magicType(input.slice(i));
+        for (let i = 0; i < input.length; i++) {
+            type = FileType.magicType(input.slice(i));
             if (type) {
                 if (ignoreCommon && commonExts.indexOf(type.ext) > -1) {
                     numCommonFound++;
@@ -96,14 +96,13 @@ const FileType = {
      * Given a buffer, detects magic byte sequences at specific positions and returns the
      * extension and mime type.
      *
-     * @private
      * @param {byteArray} buf
      * @returns {Object} type
      * @returns {string} type.ext - File extension
      * @returns {string} type.mime - Mime type
      * @returns {string} [type.desc] - Description
      */
-    _magicType: function (buf) {
+    magicType: function (buf) {
         if (!(buf && buf.length > 1)) {
             return null;
         }

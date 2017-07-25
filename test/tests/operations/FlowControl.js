@@ -59,12 +59,68 @@ TestRegister.addTests([
         input: "Some data with a 1 in it\nSome data with a 2 in it",
         expectedOutput: "U29tZSBkYXRhIHdpdGggYSAxIGluIGl0\n53 6f 6d 65 20 64 61 74 61 20 77 69 74 68 20 61 20 32 20 69 6e 20 69 74\n",
         recipeConfig: [
-            {"op":"Fork", "args":["\\n", "\\n", false]},
-            {"op":"Conditional Jump", "args":["1", "2", "10"]},
-            {"op":"To Hex", "args":["Space"]},
-            {"op":"Return", "args":[]},
-            {"op":"To Base64", "args":["A-Za-z0-9+/="]}
+            {"op": "Fork", "args": ["\\n", "\\n", false]},
+            {"op": "Conditional Jump", "args": ["1", "2", "10"]},
+            {"op": "To Hex", "args": ["Space"]},
+            {"op": "Return", "args": []},
+            {"op": "To Base64", "args": ["A-Za-z0-9+/="]}
         ]
+    },
+    {
+        name: "Jump: skips 0",
+        input: [
+            "should be changed",
+        ].join("\n"),
+        expectedOutput: [
+            "should be changed was changed",
+        ].join("\n"),
+        recipeConfig: [
+            {
+                op: "Jump",
+                args: [0, 10],
+            },
+            {
+                op: "Find / Replace",
+                args: [
+                    {
+                        "option": "Regex",
+                        "string": "should be changed"
+                    },
+                    "should be changed was changed",
+                    true,
+                    true,
+                    true,
+                ],
+            },
+        ],
+    },
+    {
+        name: "Jump: skips 1",
+        input: [
+            "shouldnt be changed",
+        ].join("\n"),
+        expectedOutput: [
+            "shouldnt be changed",
+        ].join("\n"),
+        recipeConfig: [
+            {
+                op: "Jump",
+                args: [1, 10],
+            },
+            {
+                op: "Find / Replace",
+                args: [
+                    {
+                        "option": "Regex",
+                        "string": "shouldnt be changed"
+                    },
+                    "shouldnt be changed was changed",
+                    true,
+                    true,
+                    true,
+                ],
+            },
+        ],
     },
     {
         name: "Conditional Jump: Skips 0",
@@ -108,6 +164,113 @@ TestRegister.addTests([
                     true,
                     true,
                 ],
+            },
+        ],
+    },
+    {
+        name: "Comment: nothing",
+        input: "",
+        expectedOutput: "",
+        recipeConfig: [
+            {
+                "op": "Comment",
+                "args": [""]
+            }
+        ]
+    },
+    {
+        name: "Fork, Comment, Base64",
+        input: "cat\nsat\nmat",
+        expectedOutput: "Y2F0\nc2F0\nbWF0\n",
+        recipeConfig: [
+            {
+                "op": "Fork",
+                "args": ["\\n", "\\n", false]
+            },
+            {
+                "op": "Comment",
+                "args": ["Testing 123"]
+            },
+            {
+                "op": "To Base64",
+                "args": ["A-Za-z0-9+/="]
+            }
+        ]
+    },
+    {
+        name: "Conditional Jump: Skips 1",
+        input: [
+            "match",
+            "should not be changed",
+            "should be changed",
+        ].join("\n"),
+        expectedOutput: [
+            "match",
+            "should not be changed",
+            "should be changed was changed"
+        ].join("\n"),
+        recipeConfig: [
+            {
+                op: "Conditional Jump",
+                args: ["match", 1, 10],
+            },
+            {
+                op: "Find / Replace",
+                args: [
+                    {
+                        "option": "Regex",
+                        "string": "should not be changed"
+                    },
+                    "should not be changed was changed",
+                    true,
+                    true,
+                    true,
+                ],
+            },
+            {
+                op: "Find / Replace",
+                args: [
+                    {
+                        "option": "Regex",
+                        "string": "should be changed"
+                    },
+                    "should be changed was changed",
+                    true,
+                    true,
+                    true,
+                ],
+            },
+        ],
+    },
+    {
+        name: "Conditional Jump: Skips negatively",
+        input: [
+            "match",
+        ].join("\n"),
+        expectedOutput: [
+            "replaced",
+        ].join("\n"),
+        recipeConfig: [
+            {
+                op: "Jump",
+                args: [1],
+            },
+            {
+                op: "Find / Replace",
+                args: [
+                    {
+                        "option": "Regex",
+                        "string": "match"
+                    },
+                    "replaced",
+                    true,
+                    true,
+                    true,
+                ],
+            },
+            {
+                op: "Conditional Jump",
+                args: ["match", -2, 10],
             },
         ],
     },

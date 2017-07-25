@@ -20,21 +20,23 @@ import Split from "split.js";
  * @param {String[]} defaultFavourites - A list of default favourite operations.
  * @param {Object} options - Default setting for app options.
  */
-var App = function(categories, operations, defaultFavourites, defaultOptions) {
-    this.categories  = categories;
-    this.operations  = operations;
-    this.dfavourites = defaultFavourites;
-    this.doptions    = defaultOptions;
-    this.options     = Utils.extend({}, defaultOptions);
+const App = function(categories, operations, defaultFavourites, defaultOptions) {
+    this.categories    = categories;
+    this.operations    = operations;
+    this.dfavourites   = defaultFavourites;
+    this.doptions      = defaultOptions;
+    this.options       = Utils.extend({}, defaultOptions);
 
-    this.chef        = new Chef();
-    this.manager     = new Manager(this);
+    this.chef          = new Chef();
+    this.manager       = new Manager(this);
 
-    this.autoBake_   = false;
-    this.progress    = 0;
-    this.ingId       = 0;
+    this.baking        = false;
+    this.autoBake_     = false;
+    this.autoBakePause = false;
+    this.progress      = 0;
+    this.ingId         = 0;
 
-    window.chef      = this.chef;
+    window.chef        = this.chef;
 };
 
 
@@ -52,6 +54,26 @@ App.prototype.setup = function() {
     this.resetLayout();
     this.setCompileMessage();
     this.loadURIParams();
+    this.loaded();
+};
+
+
+/**
+ * Fires once all setup activities have completed.
+ */
+App.prototype.loaded = function() {
+    // Trigger CSS animations to remove preloader
+    document.body.classList.add("loaded");
+
+    // Wait for animations to complete then remove the preloader and loaded style
+    // so that the animations for existing elements don't play again.
+    setTimeout(function() {
+        document.getElementById("loader-wrapper").remove();
+        document.body.classList.remove("loaded");
+    }, 1000);
+
+    // Clear the loading message interval
+    clearInterval(window.loadingMsgsInt);
 };
 
 
@@ -62,8 +84,34 @@ App.prototype.setup = function() {
  */
 App.prototype.handleError = function(err) {
     console.error(err);
-    var msg = err.displayStr || err.toString();
+    const msg = err.displayStr || err.toString();
     this.alert(msg, "danger", this.options.errorTimeout, !this.options.showErrors);
+};
+
+
+/**
+ * Updates the UI to show if baking is in process or not.
+ *
+ * @param {bakingStatus}
+ */
+App.prototype.setBakingStatus = function(bakingStatus) {
+    this.baking = bakingStatus;
+
+    let inputLoadingIcon = document.querySelector("#input .title .loading-icon"),
+        outputLoadingIcon = document.querySelector("#output .title .loading-icon"),
+        outputElement = document.querySelector("#output-text");
+
+    if (bakingStatus) {
+        inputLoadingIcon.style.display = "inline-block";
+        outputLoadingIcon.style.display = "inline-block";
+        outputElement.classList.add("disabled");
+        outputElement.disabled = true;
+    } else {
+        inputLoadingIcon.style.display = "none";
+        outputLoadingIcon.style.display = "none";
+        outputElement.classList.remove("disabled");
+        outputElement.disabled = false;
+    }
 };
 
 
@@ -73,13 +121,17 @@ App.prototype.handleError = function(err) {
  * @param {boolean} [step] - Set to true if we should only execute one operation instead of the
  *   whole recipe.
  */
-App.prototype.bake = function(step) {
-    var response;
+App.prototype.bake = async function(step) {
+    let response;
+
+    if (this.baking) return;
+
+    this.setBakingStatus(true);
 
     try {
-        response = this.chef.bake(
-            this.getInput(),         // The user's input
-            this.getRecipeConfig(), // The configuration of the recipe
+        response = await this.chef.bake(
+            this.getInput(),          // The user's input
+            this.getRecipeConfig(),   // The configuration of the recipe
             this.options,             // Options set by the user
             this.progress,            // The current position in the recipe
             step                      // Whether or not to take one step or execute the whole recipe
@@ -87,6 +139,8 @@ App.prototype.bake = function(step) {
     } catch (err) {
         this.handleError(err);
     }
+
+    this.setBakingStatus(false);
 
     if (!response) return;
 
@@ -113,7 +167,7 @@ App.prototype.bake = function(step) {
  * Runs Auto Bake if it is set.
  */
 App.prototype.autoBake = function() {
-    if (this.autoBake_) {
+    if (this.autoBake_ && !this.autoBakePause) {
         this.bake();
     }
 };
@@ -129,7 +183,7 @@ App.prototype.autoBake = function() {
  * @returns {number} - The number of miliseconds it took to run the silent bake.
  */
 App.prototype.silentBake = function() {
-    var startTime = new Date().getTime(),
+    let startTime = new Date().getTime(),
         recipeConfig = this.getRecipeConfig();
 
     if (this.autoBake_) {
@@ -146,13 +200,7 @@ App.prototype.silentBake = function() {
  * @returns {string}
  */
 App.prototype.getInput = function() {
-    var input = this.manager.input.get();
-
-    // Save to session storage in case we need to restore it later
-    sessionStorage.setItem("inputLength", input.length);
-    sessionStorage.setItem("input", input);
-
-    return input;
+    return this.manager.input.get();
 };
 
 
@@ -162,8 +210,6 @@ App.prototype.getInput = function() {
  * @param {string} input - The string to set the input to
  */
 App.prototype.setInput = function(input) {
-    sessionStorage.setItem("inputLength", input.length);
-    sessionStorage.setItem("input", input);
     this.manager.input.set(input);
 };
 
@@ -178,15 +224,16 @@ App.prototype.populateOperationsList = function() {
     // Move edit button away before we overwrite it
     document.body.appendChild(document.getElementById("edit-favourites"));
 
-    var html = "";
+    let html = "";
+    let i;
 
-    for (var i = 0; i < this.categories.length; i++) {
-        var catConf = this.categories[i],
+    for (i = 0; i < this.categories.length; i++) {
+        let catConf = this.categories[i],
             selected = i === 0,
             cat = new HTMLCategory(catConf.name, selected);
 
-        for (var j = 0; j < catConf.ops.length; j++) {
-            var opName = catConf.ops[j],
+        for (let j = 0; j < catConf.ops.length; j++) {
+            let opName = catConf.ops[j],
                 op = new HTMLOperation(opName, this.operations[opName], this, this.manager);
             cat.addOperation(op);
         }
@@ -196,7 +243,7 @@ App.prototype.populateOperationsList = function() {
 
     document.getElementById("categories").innerHTML = html;
 
-    var opLists = document.querySelectorAll("#categories .op-list");
+    const opLists = document.querySelectorAll("#categories .op-list");
 
     for (i = 0; i < opLists.length; i++) {
         opLists[i].dispatchEvent(this.manager.oplistcreate);
@@ -236,7 +283,7 @@ App.prototype.initialiseSplitter = function() {
  */
 App.prototype.loadLocalStorage = function() {
     // Load options
-    var lOptions;
+    let lOptions;
     if (localStorage.options !== undefined) {
         lOptions = JSON.parse(localStorage.options);
     }
@@ -253,7 +300,7 @@ App.prototype.loadLocalStorage = function() {
  * If the user currently has no saved favourites, the defaults from the view constructor are used.
  */
 App.prototype.loadFavourites = function() {
-    var favourites = localStorage.favourites &&
+    let favourites = localStorage.favourites &&
         localStorage.favourites.length > 2 ?
         JSON.parse(localStorage.favourites) :
         this.dfavourites;
@@ -261,7 +308,7 @@ App.prototype.loadFavourites = function() {
     favourites = this.validFavourites(favourites);
     this.saveFavourites(favourites);
 
-    var favCat = this.categories.filter(function(c) {
+    const favCat = this.categories.filter(function(c) {
         return c.name === "Favourites";
     })[0];
 
@@ -284,8 +331,8 @@ App.prototype.loadFavourites = function() {
  * @returns {string[]} A list of the valid favourites
  */
 App.prototype.validFavourites = function(favourites) {
-    var validFavs = [];
-    for (var i = 0; i < favourites.length; i++) {
+    const validFavs = [];
+    for (let i = 0; i < favourites.length; i++) {
         if (this.operations.hasOwnProperty(favourites[i])) {
             validFavs.push(favourites[i]);
         } else {
@@ -325,7 +372,7 @@ App.prototype.resetFavourites = function() {
  * @param {string} name - The name of the operation
  */
 App.prototype.addFavourite = function(name) {
-    var favourites = JSON.parse(localStorage.favourites);
+    const favourites = JSON.parse(localStorage.favourites);
 
     if (favourites.indexOf(name) >= 0) {
         this.alert("'" + name + "' is already in your favourites", "info", 2000);
@@ -344,61 +391,55 @@ App.prototype.addFavourite = function(name) {
  * Checks for input and recipe in the URI parameters and loads them if present.
  */
 App.prototype.loadURIParams = function() {
-    // Load query string from URI
-    this.queryString = (function(a) {
-        if (a === "") return {};
-        var b = {};
-        for (var i = 0; i < a.length; i++) {
-            var p = a[i].split("=");
-            if (p.length !== 2) {
-                b[a[i]] = true;
-            } else {
-                b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-            }
-        }
-        return b;
-    })(window.location.search.substr(1).split("&"));
+    // Load query string or hash from URI (depending on which is populated)
+    // We prefer getting the hash by splitting the href rather than referencing
+    // location.hash as some browsers (Firefox) automatically URL decode it,
+    // which cause issues.
+    const params = window.location.search ||
+        window.location.href.split("#")[1] ||
+        window.location.hash;
+    this.uriParams = Utils.parseURIParams(params);
 
-    // Turn off auto-bake while loading
-    var autoBakeVal = this.autoBake_;
-    this.autoBake_ = false;
+    // Pause auto-bake while loading but don't modify `this.autoBake_`
+    // otherwise `manualBake` cannot trigger.
+    this.autoBakePause = true;
 
-    // Read in recipe from query string
-    if (this.queryString.recipe) {
+    // Read in recipe from URI params
+    if (this.uriParams.recipe) {
         try {
-            var recipeConfig = JSON.parse(this.queryString.recipe);
+            const recipeConfig = JSON.parse(this.uriParams.recipe);
             this.setRecipeConfig(recipeConfig);
         } catch (err) {}
-    } else if (this.queryString.op) {
+    } else if (this.uriParams.op) {
         // If there's no recipe, look for single operations
         this.manager.recipe.clearRecipe();
         try {
-            this.manager.recipe.addOperation(this.queryString.op);
+            this.manager.recipe.addOperation(this.uriParams.op);
         } catch (err) {
             // If no exact match, search for nearest match and add that
-            var matchedOps = this.manager.ops.filterOperations(this.queryString.op, false);
+            const matchedOps = this.manager.ops.filterOperations(this.uriParams.op, false);
             if (matchedOps.length) {
                 this.manager.recipe.addOperation(matchedOps[0].name);
             }
 
             // Populate search with the string
-            var search = document.getElementById("search");
+            const search = document.getElementById("search");
 
-            search.value = this.queryString.op;
+            search.value = this.uriParams.op;
             search.dispatchEvent(new Event("search"));
         }
     }
 
-    // Read in input data from query string
-    if (this.queryString.input) {
+    // Read in input data from URI params
+    if (this.uriParams.input) {
         try {
-            var inputData = Utils.fromBase64(this.queryString.input);
+            const inputData = Utils.fromBase64(this.uriParams.input);
             this.setInput(inputData);
         } catch (err) {}
     }
 
-    // Restore auto-bake state
-    this.autoBake_ = autoBakeVal;
+    // Unpause auto-bake
+    this.autoBakePause = false;
     this.autoBake();
 };
 
@@ -419,9 +460,7 @@ App.prototype.nextIngId = function() {
  * @returns {Object[]}
  */
 App.prototype.getRecipeConfig = function() {
-    var recipeConfig = this.manager.recipe.getConfig();
-    sessionStorage.setItem("recipeConfig", JSON.stringify(recipeConfig));
-    return recipeConfig;
+    return this.manager.recipe.getConfig();
 };
 
 
@@ -431,15 +470,14 @@ App.prototype.getRecipeConfig = function() {
  * @param {Object[]} recipeConfig - The recipe configuration
  */
 App.prototype.setRecipeConfig = function(recipeConfig) {
-    sessionStorage.setItem("recipeConfig", JSON.stringify(recipeConfig));
     document.getElementById("rec-list").innerHTML = null;
 
-    for (var i = 0; i < recipeConfig.length; i++) {
-        var item = this.manager.recipe.addOperation(recipeConfig[i].op);
+    for (let i = 0; i < recipeConfig.length; i++) {
+        const item = this.manager.recipe.addOperation(recipeConfig[i].op);
 
         // Populate arguments
-        var args = item.querySelectorAll(".arg");
-        for (var j = 0; j < args.length; j++) {
+        const args = item.querySelectorAll(".arg");
+        for (let j = 0; j < args.length; j++) {
             if (args[j].getAttribute("type") === "checkbox") {
                 // checkbox
                 args[j].checked = recipeConfig[i].args[j];
@@ -485,16 +523,25 @@ App.prototype.resetLayout = function() {
  */
 App.prototype.setCompileMessage = function() {
     // Display time since last build and compile message
-    var now = new Date(),
-        timeSinceCompile = Utils.fuzzyTime(now.getTime() - window.compileTime),
-        compileInfo = "<span style=\"font-weight: normal\">Last build: " +
-            timeSinceCompile.substr(0, 1).toUpperCase() + timeSinceCompile.substr(1) + " ago";
+    let now = new Date(),
+        timeSinceCompile = Utils.fuzzyTime(now.getTime() - window.compileTime);
+
+    // Calculate previous version to compare to
+    let prev = PKG_VERSION.split(".").map(n => {
+        return parseInt(n, 10);
+    });
+    if (prev[2] > 0) prev[2]--;
+    else if (prev[1] > 0) prev[1]--;
+    else prev[0]--;
+
+    const compareURL = `https://github.com/gchq/CyberChef/compare/v${prev.join(".")}...v${PKG_VERSION}`;
+
+    let compileInfo = `<a href='${compareURL}'>Last build: ${timeSinceCompile.substr(0, 1).toUpperCase() + timeSinceCompile.substr(1)} ago</a>`;
 
     if (window.compileMessage !== "") {
         compileInfo += " - " + window.compileMessage;
     }
 
-    compileInfo += "</span>";
     document.getElementById("notice").innerHTML = compileInfo;
 };
 
@@ -523,7 +570,7 @@ App.prototype.setCompileMessage = function() {
  * this.alert("Happy Christmas!", "info", 5000);
  */
 App.prototype.alert = function(str, style, timeout, silent) {
-    var time = new Date();
+    const time = new Date();
 
     console.log("[" + time.toLocaleString() + "] " + str);
     if (silent) return;
@@ -531,7 +578,7 @@ App.prototype.alert = function(str, style, timeout, silent) {
     style = style || "danger";
     timeout = timeout || 0;
 
-    var alertEl = document.getElementById("alert"),
+    let alertEl = document.getElementById("alert"),
         alertContent = document.getElementById("alert-content");
 
     alertEl.classList.remove("alert-danger");
@@ -634,9 +681,7 @@ App.prototype.stateChange = function(e) {
  * @param {event} e
  */
 App.prototype.popState = function(e) {
-    if (window.location.href.split("#")[0] !== this.lastStateUrl) {
-        this.loadURIParams();
-    }
+    this.loadURIParams();
 };
 
 
@@ -649,7 +694,7 @@ App.prototype.callApi = function(url, type, data, dataType, contentType) {
     dataType = dataType || undefined;
     contentType = contentType || "application/json";
 
-    var response = null,
+    let response = null,
         success = false;
 
     $.ajax({
