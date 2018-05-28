@@ -41,6 +41,12 @@ a:focus {
     border-color: var(--primary-border-colour);
 }
 
+.btn-secondary.disabled, .btn-secondary:disabled {
+    color: var(--btn-default-font-colour);
+    background-color: #fff;
+    border-color: var(--primary-border-colour);
+}
+
 .btn-success {
     color: var(--btn-success-font-colour);
     background-color: var(--btn-success-bg-colour);

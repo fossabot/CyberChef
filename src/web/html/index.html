@@ -252,7 +252,7 @@
                                 <button type="button" class="btn btn-secondary btn-sm" id="save-to-file" title="Save to file"><img aria-hidden="true" src="<%- require('../static/images/save_as-16x16.png') %>" alt="Save Icon"/> Save to file</button>
                                 <button type="button" class="btn btn-secondary btn-sm" id="copy-output" title="Copy output"><img aria-hidden="true" src="<%- require('../static/images/copy-16x16.png') %>" alt="Copy Icon"/> Copy raw output</button>
                                 <button type="button" class="btn btn-secondary btn-sm" id="switch" title="Move output to input"><img aria-hidden="true" src="<%- require('../static/images/switch-16x16.png') %>" alt="Switch Icon"/> Move output to input</button>
-                                <button type="button" class="btn btn-secondary btn-sm" id="undo-switch" title="Undo move" disabled="disabled"><img aria-hidden="true" src="<%- require('../static/images/undo-16x16.png') %>" alt="Undo Icon"/> Undo</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="undo-switch" title="Undo move" disabled><img aria-hidden="true" src="<%- require('../static/images/undo-16x16.png') %>" alt="Undo Icon"/> Undo</button>
                                 <button type="button" class="btn btn-secondary btn-sm" id="maximise-output" title="Maximise"><img aria-hidden="true" src="<%- require('../static/images/maximise-16x16.png') %>" alt="Maximise Icon"/> Max</button>
                             </div>
                             <div class="io-info" id="output-info"></div>
@@ -305,9 +305,9 @@
                         <div class="form-group">
                             <label for="save-text">Save your recipe to local storage or copy the following string to load later</label>
                             <ul class="nav nav-tabs" role="tablist">
-                                <li role="presentation" class="active"><a href="#chef-format" role="tab" data-toggle="tab">Chef format</a></li>
-                                <li role="presentation"><a href="#clean-json" role="tab" data-toggle="tab">Clean JSON</a></li>
-                                <li role="presentation"><a href="#compact-json" role="tab" data-toggle="tab">Compact JSON</a></li>
+                                <li role="presentation" class="nav-item"><a class="active nav-link" href="#chef-format" role="tab" data-toggle="tab">Chef format</a></li>
+                                <li role="presentation" class="nav-item"><a class="nav-link" href="#clean-json" role="tab" data-toggle="tab">Clean JSON</a></li>
+                                <li role="presentation" class="nav-item"><a class="nav-link" href="#compact-json" role="tab" data-toggle="tab">Compact JSON</a></li>
                             </ul>
                             <div class="tab-content" id="save-texts">
                                 <div role="tabpanel" class="tab-pane active" id="chef-format">
